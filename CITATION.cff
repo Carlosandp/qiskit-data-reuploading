@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the original paper and this implementation."
+
+title: "qiskit-data-reuploading"
+version: "0.1.0"
+date-released: "2026-05-05"
+license: MIT
+repository-code: "https://github.com/Carlosandp/qiskit-data-reuploading"
+
+authors:
+  - name: "Carlos Andrade"
+
+references:
+  - type: article
+    title: "Data re-uploading for a universal quantum classifier"
+    authors:
+      - family-names: "Pérez-Salinas"
+        given-names: "Adrián"
+      - family-names: "Cervera-Lierta"
+        given-names: "Alba"
+      - family-names: "Gil-Fuster"
+        given-names: "Elies"
+      - family-names: "Latorre"
+        given-names: "José Ignacio"
+    journal: "Quantum"
+    volume: 4
+    pages: 226
+    year: 2020
+    doi: "10.22331/q-2020-02-06-226"
+    url: "https://doi.org/10.22331/q-2020-02-06-226"
