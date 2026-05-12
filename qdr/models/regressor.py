@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pickle
+from numbers import Integral
 from pathlib import Path
 from typing import Any
 
@@ -14,13 +15,14 @@ from sklearn.utils.validation import check_is_fitted
 
 from qdr.circuits.data_reuploading import DataReuploadingCircuit
 from qdr.training.optimizers import ADAM, COBYLA, SPSA
+from qdr.utils.encoding import N_ROTATIONS
 
 
 class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
     """Quantum regressor based on the data re-uploading technique.
 
     Predicts a continuous scalar output as the expectation value of a Z
-    observable, optionally scaled to the target range observed during training.
+    observable, scaled to the target range observed during training.
 
     Parameters
     ----------
@@ -34,10 +36,13 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         Entanglement pattern.  Default ``"full"``.
     optimizer : str, optional
         ``"SPSA"``, ``"COBYLA"`` (default), or ``"ADAM"``.
-    backend : None
-        Reserved for hardware integration.
+    backend : None, optional
+        Must be ``None`` during ``fit``. Hardware execution is exposed through
+        :func:`qdr.hardware.run_on_ibm_backend` so that real-backend cost,
+        authentication, transpilation, and batching are explicit.
     shots : int or None, optional
-        ``None`` = exact statevector simulation.
+        ``None`` = exact statevector simulation.  Positive int uses
+        :class:`~qiskit_aer.primitives.EstimatorV2` with that shot count.
     max_iter : int, optional
         Maximum optimiser iterations.  Default 100.
     learning_rate : float, optional
@@ -57,6 +62,17 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         Minimum target value seen during training.
     y_max_ : float
         Maximum target value seen during training.
+
+    Notes
+    -----
+    The underlying circuit uses gates whose angles are
+
+        ``angle = w[l, i, r] + x[feat_idx(l, i, r)]``
+
+    and predicts one scalar from a single ``<Z_0>`` observable. Outputs are
+    rescaled from ``[-1, 1]`` to the target range observed during ``fit``. This
+    estimator is intentionally single-output; multi-output regression requires
+    a separate observable design and is not implemented.
     """
 
     def __init__(
@@ -86,13 +102,73 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
     # ------------------------------------------------------------------
 
     def _build_estimator(self):
+        if self.backend is not None:
+            raise ValueError(
+                "backend is not supported by fit(); got "
+                f"backend={self.backend!r}. Use qdr.hardware.run_on_ibm_backend() "
+                "for IBM Quantum execution."
+            )
         if self.shots is None:
             return StatevectorEstimator()
+        if isinstance(self.shots, bool) or not isinstance(self.shots, int) or self.shots < 1:
+            raise ValueError(f"shots must be None or a positive integer, got {self.shots!r}.")
         try:
             from qiskit_aer.primitives import EstimatorV2 as AerEstimatorV2
-            return AerEstimatorV2()
         except ImportError:
-            return StatevectorEstimator()
+            raise ImportError(
+                "Finite-shot simulation requires qiskit-aer. "
+                "Install it with: pip install qiskit-data-reuploading"
+            ) from None
+        run_options: dict[str, int] = {"shots": self.shots}
+        if self.seed is not None:
+            run_options["seed_simulator"] = self.seed
+        return AerEstimatorV2(options={"run_options": run_options})
+
+    def _validate_X(self, X: np.ndarray, *, reset: bool) -> np.ndarray:
+        X = np.asarray(X, dtype=float)
+        if X.ndim != 2:
+            raise ValueError(f"X must be a 2D array, got X.ndim={X.ndim}.")
+        if np.any(~np.isfinite(X)):
+            raise ValueError("X contains NaN or Inf values; all features must be finite.")
+        if not reset and X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"X has {X.shape[1]} features, but this regressor was fitted with "
+                f"n_features_in_={self.n_features_in_}."
+            )
+        return X
+
+    def _validate_y(self, y: np.ndarray, n_samples: int) -> np.ndarray:
+        y = np.asarray(y, dtype=float)
+        if y.ndim != 1:
+            raise ValueError(f"y must be a 1D array, got y.ndim={y.ndim}.")
+        if y.shape[0] != n_samples:
+            raise ValueError(
+                f"X and y have inconsistent lengths: X has {n_samples} samples, "
+                f"y has {y.shape[0]}."
+            )
+        if np.any(~np.isfinite(y)):
+            raise ValueError("y contains NaN or Inf values; all targets must be finite.")
+        return y
+
+    def _validate_feature_capacity(self, n_features: int) -> None:
+        if self.encoding not in N_ROTATIONS:
+            return
+        if (
+            isinstance(self.n_layers, bool)
+            or isinstance(self.n_qubits, bool)
+            or not isinstance(self.n_layers, Integral)
+            or not isinstance(self.n_qubits, Integral)
+            or self.n_layers < 1
+            or self.n_qubits < 1
+        ):
+            return
+        n_slots = int(self.n_layers) * int(self.n_qubits) * N_ROTATIONS[self.encoding]
+        if n_features > n_slots:
+            raise ValueError(
+                f"n_features_in_={n_features} exceeds the number of encoding slots "
+                f"({n_slots}) for n_qubits={self.n_qubits}, n_layers={self.n_layers}, "
+                f"encoding='{self.encoding}'. Increase model capacity or reduce features."
+            )
 
     def _observable(self) -> SparsePauliOp:
         n = self.n_qubits
@@ -106,6 +182,7 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
 
     def _scale_to_target(self, evs: np.ndarray) -> np.ndarray:
         """Map [-1,1] → [y_min_, y_max_]."""
+        evs = np.clip(evs, -1.0, 1.0)
         return self.y_min_ + (evs + 1.0) / 2.0 * (self.y_max_ - self.y_min_)
 
     def _scale_from_target(self, y: np.ndarray) -> np.ndarray:
@@ -128,11 +205,23 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         self
+
+        Raises
+        ------
+        ValueError
+            If ``X`` is not two-dimensional, contains non-finite values, ``y``
+            has the wrong shape or length, targets contain non-finite values,
+            the feature count exceeds the available data-uploading slots, or
+            the optimizer or circuit configuration is invalid.
+        ImportError
+            If ``shots`` is a positive integer and ``qiskit-aer`` is not
+            installed.
         """
-        X = np.asarray(X, dtype=float)
-        y = np.asarray(y, dtype=float)
+        X = self._validate_X(X, reset=True)
+        y = self._validate_y(y, X.shape[0])
 
         self.n_features_in_ = X.shape[1]
+        self._validate_feature_capacity(self.n_features_in_)
         self.y_min_ = float(y.min())
         self.y_max_ = float(y.max())
         y_scaled = self._scale_from_target(y)  # ∈ [-1, 1]
@@ -151,14 +240,18 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         rng = np.random.default_rng(self.seed)
         init_weights = rng.uniform(-np.pi, np.pi, self._circuit_.n_weights)
 
+        self._last_loss_: float = 0.0
+
         def loss_fn(w: np.ndarray) -> float:
             evs = self._evaluate_batch(w, X)
-            return float(np.mean((evs - y_scaled) ** 2))
+            val = float(np.mean((evs - y_scaled) ** 2))
+            self._last_loss_ = val
+            return val
 
         self.loss_history_: list[float] = []
 
         def _record(w: np.ndarray) -> None:
-            self.loss_history_.append(loss_fn(w))
+            self.loss_history_.append(self._last_loss_)
 
         if self.optimizer == "COBYLA":
             result = COBYLA(maxiter=self.max_iter).minimize(loss_fn, init_weights, callback=_record)
@@ -170,7 +263,10 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
             from qdr.training.gradients import ParameterShiftGradient
 
             psr = ParameterShiftGradient(self._circuit_, self._obs_, estimator=self._estimator_)
-            grad_fn = lambda w: psr.compute(w, X, y_scaled)
+
+            def grad_fn(w: np.ndarray) -> np.ndarray:
+                return psr.compute(w, X, y_scaled)
+
             result = ADAM(maxiter=self.max_iter, lr=self.learning_rate).minimize(
                 loss_fn, init_weights, gradient_fn=grad_fn, callback=_record
             )
@@ -192,16 +288,35 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         np.ndarray of shape (n_samples,)
+
+        Raises
+        ------
+        ValueError
+            If ``X`` contains non-finite values or its feature count differs
+            from the data used in ``fit``.
+        sklearn.exceptions.NotFittedError
+            If the regressor has not been fitted.
         """
         check_is_fitted(self, "weights_")
-        X = np.asarray(X, dtype=float)
+        X = self._validate_X(X, reset=False)
         evs = self._evaluate_batch(self.weights_, X)
         return self._scale_to_target(evs)
 
     # ------------------------------------------------------------------
 
     def save(self, path: str | Path) -> None:
-        """Serialise the fitted model."""
+        """Serialise the fitted model.
+
+        Parameters
+        ----------
+        path : str or Path
+            Destination file path.
+
+        Raises
+        ------
+        sklearn.exceptions.NotFittedError
+            If the regressor has not been fitted.
+        """
         check_is_fitted(self, "weights_")
         payload = {
             "params": self.get_params(),
@@ -214,8 +329,29 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         Path(path).write_bytes(pickle.dumps(payload))
 
     @classmethod
-    def load(cls, path: str | Path) -> "DataReuploadingRegressor":
-        """Load a saved model."""
+    def load(
+        cls: type["DataReuploadingRegressor"],
+        path: str | Path,
+    ) -> "DataReuploadingRegressor":
+        """Load a saved model.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to a file created by :meth:`save`.
+
+        Returns
+        -------
+        DataReuploadingRegressor
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``path`` does not exist.
+        ValueError
+            If the saved parameters are inconsistent with the circuit
+            constraints.
+        """
         payload = pickle.loads(Path(path).read_bytes())
         model = cls(**payload["params"])
         model.weights_ = payload["weights_"]

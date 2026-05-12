@@ -1,4 +1,4 @@
-"""Benchmark DataReuploadingClassifier vs MLP and SVM on the Iris dataset."""
+"""Benchmark DataReuploadingClassifier against classical baselines on Iris."""
 
 import numpy as np
 from sklearn.datasets import load_iris
@@ -29,7 +29,15 @@ qdr = DataReuploadingClassifier(
 
 # --- Run benchmark ---
 runner = BenchmarkRunner(test_size=0.25, cv_folds=3, random_state=0, verbose=True)
-runner.run(X_scaled, y, qdr_model=qdr, include_svm=True, include_mlp=True)
+runner.run(
+    X_scaled,
+    y,
+    qdr_model=qdr,
+    include_logreg=True,
+    include_svm=True,
+    include_rf=True,
+    include_mlp=True,
+)
 df = runner.summary()
 
 try:

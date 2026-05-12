@@ -1,6 +1,6 @@
-"""qdr — Qiskit Data Reuploading library.
+"""qdr - Qiskit Data Reuploading library.
 
-Implements the data re-uploading quantum classifier (Pérez-Salinas et al., 2019)
+Implements the data re-uploading quantum classifier (Perez-Salinas et al., 2020)
 with a full sklearn-compatible API, Qiskit 2.x V2 primitives, and benchmarking
 tools.
 """

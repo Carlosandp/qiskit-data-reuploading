@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pickle
+from numbers import Integral
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.validation import check_is_fitted
 
 from qdr.circuits.data_reuploading import DataReuploadingCircuit
-from qdr.training.optimizers import ADAM, COBYLA, SPSA, get_optimizer
+from qdr.training.optimizers import ADAM, COBYLA, SPSA
+from qdr.utils.encoding import N_ROTATIONS
 
 
 class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
@@ -38,12 +40,13 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         ``"full"`` (default).
     optimizer : str, optional
         Optimizer — ``"SPSA"``, ``"COBYLA"`` (default), or ``"ADAM"``.
-    backend : None
-        Reserved for future hardware integration.  Pass ``None`` to use the
-        local :class:`~qiskit.primitives.StatevectorEstimator`.
+    backend : None, optional
+        Must be ``None`` during ``fit``. Hardware execution is exposed through
+        :func:`qdr.hardware.run_on_ibm_backend` so that real-backend cost,
+        authentication, transpilation, and batching are explicit.
     shots : int or None, optional
-        ``None`` = exact statevector simulation.  Positive int uses the
-        :class:`~qiskit_aer.primitives.SamplerV2` instead (noise aware).
+        ``None`` = exact statevector simulation.  Positive int uses
+        :class:`~qiskit_aer.primitives.EstimatorV2` with that shot count.
     max_iter : int, optional
         Maximum optimiser iterations.  Default 100.
     learning_rate : float, optional
@@ -61,6 +64,17 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         Per-iteration loss values recorded during training.
     n_features_in_ : int
         Number of features seen during ``fit``.
+
+    Notes
+    -----
+    The underlying circuit uses data re-uploading gates whose angles are
+
+        ``angle = w[l, i, r] + x[feat_idx(l, i, r)]``
+
+    where ``feat_idx`` cycles modulo ``n_features`` in
+    :class:`qdr.circuits.DataReuploadingCircuit`. Binary classification uses a
+    single ``<Z_0>`` observable. Multiclass classification uses one local Z
+    observable per class and requires ``n_qubits >= n_classes``.
     """
 
     def __init__(
@@ -92,25 +106,108 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
     # ------------------------------------------------------------------
 
     def _build_estimator(self):
+        if self.backend is not None:
+            raise ValueError(
+                "backend is not supported by fit(); got "
+                f"backend={self.backend!r}. Use qdr.hardware.run_on_ibm_backend() "
+                "for IBM Quantum execution."
+            )
         if self.shots is None:
             return StatevectorEstimator()
-        # Noisy simulation via Aer sampler-backed estimator
+        if isinstance(self.shots, bool) or not isinstance(self.shots, int) or self.shots < 1:
+            raise ValueError(f"shots must be None or a positive integer, got {self.shots!r}.")
+        # Finite-shot simulation via Aer EstimatorV2.
         try:
             from qiskit_aer.primitives import EstimatorV2 as AerEstimatorV2
-            return AerEstimatorV2()
         except ImportError:
-            return StatevectorEstimator()
+            raise ImportError(
+                "Finite-shot simulation requires qiskit-aer. "
+                "Install it with: pip install qiskit-data-reuploading"
+            ) from None
+        run_options: dict[str, int] = {"shots": self.shots}
+        if self.seed is not None:
+            run_options["seed_simulator"] = self.seed
+        return AerEstimatorV2(options={"run_options": run_options})
+
+    def _validate_X(self, X: np.ndarray, *, reset: bool) -> np.ndarray:
+        X = np.asarray(X, dtype=float)
+        if X.ndim != 2:
+            raise ValueError(f"X must be a 2D array, got X.ndim={X.ndim}.")
+        if np.any(~np.isfinite(X)):
+            raise ValueError("X contains NaN or Inf values; all features must be finite.")
+        if not reset and X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"X has {X.shape[1]} features, but this classifier was fitted with "
+                f"n_features_in_={self.n_features_in_}."
+            )
+        return X
+
+    def _validate_y(self, y: np.ndarray, n_samples: int) -> np.ndarray:
+        y = np.asarray(y)
+        if y.ndim != 1:
+            raise ValueError(f"y must be a 1D array, got y.ndim={y.ndim}.")
+        if y.shape[0] != n_samples:
+            raise ValueError(
+                f"X and y have inconsistent lengths: X has {n_samples} samples, "
+                f"y has {y.shape[0]}."
+            )
+        for label in y:
+            if label is None or (
+                isinstance(label, (float, np.floating)) and not np.isfinite(label)
+            ):
+                raise ValueError("y contains NaN, Inf, or None labels; class labels must be valid.")
+        return y
+
+    def _validate_feature_capacity(self, n_features: int) -> None:
+        if self.encoding not in N_ROTATIONS:
+            return
+        if (
+            isinstance(self.n_layers, bool)
+            or isinstance(self.n_qubits, bool)
+            or not isinstance(self.n_layers, Integral)
+            or not isinstance(self.n_qubits, Integral)
+            or self.n_layers < 1
+            or self.n_qubits < 1
+        ):
+            return
+        n_slots = int(self.n_layers) * int(self.n_qubits) * N_ROTATIONS[self.encoding]
+        if n_features > n_slots:
+            raise ValueError(
+                f"n_features_in_={n_features} exceeds the number of encoding slots "
+                f"({n_slots}) for n_qubits={self.n_qubits}, n_layers={self.n_layers}, "
+                f"encoding='{self.encoding}'. Increase model capacity or reduce features."
+            )
+
+    def _has_valid_qubit_count(self) -> bool:
+        return (
+            not isinstance(self.n_qubits, bool)
+            and isinstance(self.n_qubits, Integral)
+            and self.n_qubits >= 1
+        )
 
     def _make_observable(self, n_classes: int) -> list[SparsePauliOp]:
-        """Return a list of Z observables (one per output class/qubit)."""
+        """Return a list of Z observables for the model outputs.
+
+        Binary classification uses a single ``<Z_0>`` observable.  Multiclass
+        classification uses one local Z observable per class and therefore
+        requires ``n_qubits >= n_classes``.  The method intentionally rejects
+        ``n_classes > n_qubits`` instead of cycling qubit indices, because
+        cycling would assign identical observables to different classes and
+        make those classes indistinguishable to the softmax head.
+        """
         n = self.n_qubits
         if n_classes == 2:
             # Measure qubit 0 in Z basis; Qiskit little-endian: rightmost char = qubit 0
             return [SparsePauliOp("I" * (n - 1) + "Z")]
-        # Multiclass: one observable per class, cycling through qubits
+        if n_classes > n:
+            raise ValueError(
+                f"Para {n_classes} clases se necesitan al menos {n_classes} qubits. "
+                f"Actual: n_qubits={self.n_qubits}."
+            )
+        # Multiclass: one independent local Z observable per class.
         obs = []
         for k in range(n_classes):
-            q = k % n
+            q = k
             s = list("I" * n)
             s[n - 1 - q] = "Z"
             obs.append(SparsePauliOp("".join(s)))
@@ -141,7 +238,11 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         observables: list[SparsePauliOp],
     ) -> float:
         evs = self._evaluate_batch(weights, X, observables)
-        return float(np.mean((evs - y_mapped) ** 2))
+        if evs.ndim == 1:
+            return float(np.mean((evs - y_mapped) ** 2))
+        # Multiclass objective is sum_k MSE_k so the ADAM gradient is the
+        # corresponding sum of class-wise parameter-shift gradients.
+        return float(np.mean((evs - y_mapped) ** 2, axis=0).sum())
 
     def _make_grad_fn(
         self,
@@ -159,13 +260,13 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
 
         def gradient_fn(weights: np.ndarray) -> np.ndarray:
             if len(observables) == 1:
-                evs = self._evaluate_batch(weights, X, observables)
                 return grads[0].compute(weights, X, y_mapped)
-            # Multiclass: average gradient across observables
+            # Multiclass loss is the sum of class-wise MSE terms, so its
+            # gradient is the sum of the class-wise gradients.
             total_grad = np.zeros_like(weights)
             for k, g in enumerate(grads):
                 total_grad += g.compute(weights, X, y_mapped[:, k])
-            return total_grad / len(grads)
+            return total_grad
 
         return gradient_fn
 
@@ -186,15 +287,35 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         self
+
+        Raises
+        ------
+        ValueError
+            If ``X`` is not two-dimensional, contains non-finite values, ``y``
+            has the wrong shape or length, fewer than two classes are present,
+            multiclass output requests more classes than qubits, the feature
+            count exceeds the available data-uploading slots, or the optimizer
+            or circuit configuration is invalid.
+        ImportError
+            If ``shots`` is a positive integer and ``qiskit-aer`` is not
+            installed.
         """
-        X = np.asarray(X, dtype=float)
-        y = np.asarray(y)
+        X = self._validate_X(X, reset=True)
+        y = self._validate_y(y, X.shape[0])
 
         self._label_encoder_ = LabelEncoder()
         y_int = self._label_encoder_.fit_transform(y)
         self.classes_ = self._label_encoder_.classes_
         self.n_features_in_ = X.shape[1]
         n_classes = len(self.classes_)
+        if n_classes < 2:
+            raise ValueError(f"Classifier requires at least 2 classes, got n_classes={n_classes}.")
+        self._validate_feature_capacity(self.n_features_in_)
+        if n_classes > 2 and self._has_valid_qubit_count() and n_classes > self.n_qubits:
+            raise ValueError(
+                f"Para {n_classes} clases se necesitan al menos {n_classes} qubits. "
+                f"Actual: n_qubits={self.n_qubits}."
+            )
 
         # Map to {-1, +1} for binary, or one-hot-like for multiclass
         if n_classes == 2:
@@ -222,14 +343,18 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         rng = np.random.default_rng(self.seed)
         init_weights = rng.uniform(-np.pi, np.pi, self._circuit_.n_weights)
 
+        self._last_loss_: float = 0.0
+
         def loss_fn(w: np.ndarray) -> float:
-            return self._loss(w, X, y_mapped, self._observables_)
+            val = self._loss(w, X, y_mapped, self._observables_)
+            self._last_loss_ = val
+            return val
 
         # Run optimisation
         self.loss_history_: list[float] = []
 
         def _record(w: np.ndarray) -> None:
-            self.loss_history_.append(loss_fn(w))
+            self.loss_history_.append(self._last_loss_)
 
         if self.optimizer == "COBYLA":
             opt = COBYLA(maxiter=self.max_iter)
@@ -265,14 +390,22 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         np.ndarray of shape (n_samples, n_classes)
+
+        Raises
+        ------
+        ValueError
+            If ``X`` contains non-finite values or its feature count differs
+            from the data used in ``fit``.
+        sklearn.exceptions.NotFittedError
+            If the classifier has not been fitted.
         """
         check_is_fitted(self, "weights_")
-        X = np.asarray(X, dtype=float)
+        X = self._validate_X(X, reset=False)
         evs = self._evaluate_batch(self.weights_, X, self._observables_)
 
         if evs.ndim == 1:
             # Binary: map [-1,1] → [0,1]
-            p1 = (evs + 1.0) / 2.0
+            p1 = np.clip((evs + 1.0) / 2.0, 0.0, 1.0)
             return np.column_stack([1.0 - p1, p1])
 
         # Multiclass: softmax of expectations
@@ -292,6 +425,13 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         np.ndarray of shape (n_samples,)
+
+        Raises
+        ------
+        ValueError
+            If ``X`` fails the same validation used by :meth:`predict_proba`.
+        sklearn.exceptions.NotFittedError
+            If the classifier has not been fitted.
         """
         proba = self.predict_proba(X)
         return self.classes_[np.argmax(proba, axis=1)]
@@ -307,6 +447,11 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         ----------
         path : str or Path
             Destination file path (e.g. ``"model.pkl"``).
+
+        Raises
+        ------
+        sklearn.exceptions.NotFittedError
+            If the classifier has not been fitted.
         """
         check_is_fitted(self, "weights_")
         payload = {
@@ -319,7 +464,10 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         Path(path).write_bytes(pickle.dumps(payload))
 
     @classmethod
-    def load(cls, path: str | Path) -> "DataReuploadingClassifier":
+    def load(
+        cls: type["DataReuploadingClassifier"],
+        path: str | Path,
+    ) -> "DataReuploadingClassifier":
         """Load a previously saved model.
 
         Parameters
@@ -330,6 +478,14 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         DataReuploadingClassifier
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``path`` does not exist.
+        ValueError
+            If the saved parameters are inconsistent with the circuit or
+            observable constraints.
         """
         payload = pickle.loads(Path(path).read_bytes())
         model = cls(**payload["params"])
