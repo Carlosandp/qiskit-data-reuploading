@@ -1,3 +1,5 @@
+"""Plotting helpers for QDR models, benchmarks, and quantum states."""
+
 from qdr.visualization.plots import (
     plot_benchmark_comparison,
     plot_bloch_sphere,
