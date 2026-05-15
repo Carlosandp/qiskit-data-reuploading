@@ -7,8 +7,11 @@ name = "qiskit-data-reuploading"
 version = "0.1.0"
 description = "Data re-uploading quantum classifier compatible with Qiskit 2.x — pip-installable, sklearn-compatible"
 readme = "README.md"
-license = { text = "MIT" }
-authors = [{ name = "Carlos Andrade" }]
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Carlos Andrés Durán Paredes" },
+    { name = "Javier León Calderón" },
+]
 requires-python = ">=3.10"
 keywords = [
     "quantum-computing",
@@ -20,7 +23,7 @@ keywords = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",

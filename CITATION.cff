@@ -4,11 +4,14 @@ message: "If you use this software, please cite the original paper and this impl
 title: "qiskit-data-reuploading"
 version: "0.1.0"
 date-released: "2026-05-05"
-license: MIT
+license: Apache-2.0
 repository-code: "https://github.com/Carlosandp/qiskit-data-reuploading"
 
 authors:
-  - name: "Carlos Andrade"
+  - family-names: "Durán Paredes"
+    given-names: "Carlos Andrés"
+  - family-names: "León Calderón"
+    given-names: "Javier"
 
 references:
   - type: article

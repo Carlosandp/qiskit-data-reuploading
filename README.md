@@ -6,7 +6,7 @@
 [![PyPI](https://img.shields.io/pypi/v/qiskit-data-reuploading?color=blue)](https://pypi.org/project/qiskit-data-reuploading/)
 [![Coverage](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading/branch/main/graph/badge.svg)](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading)
 [![Python](https://img.shields.io/pypi/pyversions/qiskit-data-reuploading)](https://pypi.org/project/qiskit-data-reuploading/)
-[![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE-MIT)
+[![Code License: Apache 2.0](https://img.shields.io/badge/Code%20License-Apache%202.0-blue.svg)](LICENSE)
 [![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY)
 [![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x-6929c4)](https://qiskit.org)
 
@@ -361,11 +361,11 @@ This project uses a **dual license**:
 
 | Component | License |
 |---|---|
-| Source code (`qdr/`, `tests/`, `examples/`) | [MIT License](LICENSE) |
+| Source code (`qdr/`, `tests/`, `examples/`) | [Apache License 2.0](LICENSE) |
 | Documentation, notebooks, tutorials (`docs/`, `notebooks/`) | [CC BY 4.0](LICENSE-CC-BY.txt) |
 
 **What this means in practice:**
-- You can use, modify, and redistribute the code freely under MIT terms.
+- You can use, modify, and redistribute the code freely under Apache 2.0 terms (with attribution and patent grant).
 - If you reuse or adapt the documentation or notebooks, you must credit the author.
 - Academic publications using this library should include the citation below.
 
@@ -398,7 +398,7 @@ paper and this software:
   author    = {Carlos Andres Duran Paredes and Javier Le{\'o}n Calder{\'o}n},
   year      = {2026},
   url       = {https://github.com/Carlosandp/qiskit-data-reuploading},
-  license   = {MIT (code) / CC BY 4.0 (docs)},
+  license   = {Apache-2.0 (code) / CC BY 4.0 (docs)},
   note      = {Compatible with Qiskit 2.x. Not affiliated with IBM.}
 }
 ```
