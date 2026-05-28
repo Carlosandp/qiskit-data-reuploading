@@ -312,8 +312,8 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         self._validate_feature_capacity(self.n_features_in_)
         if n_classes > 2 and self._has_valid_qubit_count() and n_classes > self.n_qubits:
             raise ValueError(
-                f"At least {n_classes} qubits are required for {n_classes} classes. "
-                f"Currently: n_qubits={self.n_qubits}."
+                f"Para {n_classes} clases se necesitan al menos {n_classes} qubits. "
+                f"Actual: n_qubits={self.n_qubits}."
             )
 
         # Map to {-1, +1} for binary, or one-hot-like for multiclass
