@@ -18,7 +18,6 @@ from qdr.circuits.data_reuploading import DataReuploadingCircuit
 from qdr.training.optimizers import ADAM, COBYLA, SPSA
 from qdr.utils.encoding import N_ROTATIONS
 
-
 class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
     """Quantum classifier based on the data re-uploading technique.
 
@@ -201,8 +200,8 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
             return [SparsePauliOp("I" * (n - 1) + "Z")]
         if n_classes > n:
             raise ValueError(
-                f"Para {n_classes} clases se necesitan al menos {n_classes} qubits. "
-                f"Actual: n_qubits={self.n_qubits}."
+                f"At least {n_classes} qubits are required for {n_classes} classes, "
+                f"but n_qubits={self.n_qubits}."
             )
         # Multiclass: one independent local Z observable per class.
         obs = []
@@ -313,8 +312,8 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         self._validate_feature_capacity(self.n_features_in_)
         if n_classes > 2 and self._has_valid_qubit_count() and n_classes > self.n_qubits:
             raise ValueError(
-                f"Para {n_classes} clases se necesitan al menos {n_classes} qubits. "
-                f"Actual: n_qubits={self.n_qubits}."
+                f"At least {n_classes} qubits are required for {n_classes} classes. "
+                f"Currently: n_qubits={self.n_qubits}."
             )
 
         # Map to {-1, +1} for binary, or one-hot-like for multiclass
