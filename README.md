@@ -3,10 +3,10 @@
 <div align="center">
 
 [![CI](https://github.com/Carlosandp/qiskit-data-reuploading/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlosandp/qiskit-data-reuploading/actions)
-[![PyPI](https://img.shields.io/pypi/v/qiskit-data-reuploading?color=blue)](https://pypi.org/project/qiskit-data-reuploading/)
+[![PyPI](https://img.shields.io/badge/PyPI-pre--release-orange)](https://pypi.org/project/qiskit-data-reuploading/)
 [![Coverage](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading/branch/main/graph/badge.svg)](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading)
-[![Python](https://img.shields.io/pypi/pyversions/qiskit-data-reuploading)](https://pypi.org/project/qiskit-data-reuploading/)
-[![Code License: Apache 2.0](https://img.shields.io/badge/Code%20License-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://pypi.org/project/qiskit-data-reuploading/)
+[![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
 [![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY)
 [![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x-6929c4)](https://qiskit.org)
 
@@ -18,6 +18,20 @@ benchmarkable, and hardware-ready open-source package.*
 > Compatible with Qiskit — not affiliated with, endorsed by, or maintained by IBM.
 
 </div>
+
+---
+
+## Authors
+
+This library is developed and maintained by:
+
+| Name | Affiliation | Contact |
+|---|---|---|
+| **Carlos A. Durán Paredes** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
+| **Javier E. León Calderón** | Department of Electronics Engineering, Universidad Nacional de Colombia, Manizales, Colombia | javleonca@unal.edu.co |
+| **Nicolás Sánchez Perea** | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia | nicolassp@unicauca.edu.co |
+| **German Darío Díaz** | Department of Physics, Universidad del Cauca, Popayán, Colombia | germandiaz@unicauca.edu.co |
+| **Camilo Segura** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | camilosegura6@gmail.com |
 
 ---
 
@@ -75,7 +89,7 @@ This library addresses a gap that remained open in the Qiskit ecosystem as of mi
 - A pip-installable `DataReuploadingClassifier` with sklearn-compatible API
 - Native data re-uploading support in `qiskit-machine-learning`
 - A dedicated feature map in Qiskit's `circuit.library`
-- Reproducible benchmarks (DR vs. LogReg/SVM/RF/MLP/XGBoost) on Qiskit 2.x V2 primitives
+- Reproducible benchmarks (DR vs. MLP/SVM) on Qiskit 2.x V2 primitives
 
 **Deprecated approaches this library explicitly avoids:**
 
@@ -127,12 +141,12 @@ X = MinMaxScaler().fit_transform(X)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 model = DataReuploadingClassifier(
-    n_qubits=3,              # Multiclass: one local Z observable per class
+    n_qubits=2,
     n_layers=5,
     encoding="rx_ry_rz",    # "rx" | "ry" | "rz" | "rx_ry_rz"
     entanglement="full",     # "none" | "linear" | "circular" | "full"
     optimizer="COBYLA",      # "COBYLA" | "SPSA" | "ADAM"
-    backend=None,            # fit() requires None; use qdr.hardware for IBM backends
+    backend=None,            # None → StatevectorEstimator (local, exact)
     shots=None,              # None → exact; int → noisy simulation
     max_iter=150,
 )
@@ -158,7 +172,7 @@ circuit = DataReuploadingCircuit(n_qubits=2, n_layers=3, n_features=4)
 circuit.build_circuit()
 circuit.draw("mpl")           # matplotlib figure
 circuit.draw("text")          # ASCII
-print(circuit.circuit.parameters)
+print(circuit.get_parameters())
 ```
 
 ### Benchmarking against classical baselines
@@ -170,10 +184,10 @@ from sklearn.datasets import make_moons
 X, y = make_moons(n_samples=200, noise=0.1)
 
 runner = BenchmarkRunner(cv_folds=5)
-runner.run(X, y, include_logreg=True, include_svm=True, include_mlp=True, include_rf=True)
+runner.run(X, y, include_svm=True, include_mlp=True, include_lr=True)
 
 df = runner.summary()
-# Returns pandas DataFrame: model, accuracy, f1, train_time_s, predict_time_s, cv_mean, cv_std
+# Returns pandas DataFrame: model, accuracy, f1, precision, recall, mcc, train_time_s
 print(df.to_string(index=False))
 ```
 
@@ -183,29 +197,25 @@ print(df.to_string(index=False))
 from qdr.visualization import (
     plot_decision_boundary,
     plot_loss_curve,
+    plot_bloch_trajectory,
+    plot_parameter_landscape,
 )
 
 plot_loss_curve(model.loss_history_)
 plot_decision_boundary(model, X_test, y_test)
+plot_bloch_trajectory(circuit, X_train[0])
 ```
-
-For datasets with more than two features, `plot_decision_boundary` plots the
-selected `feature_indices` and fixes all non-plotted features at their empirical
-mean in `X`. This produces a well-defined 2D slice of the fitted model.
 
 ### IBM Quantum hardware
 
 ```python
 from qdr.hardware import run_on_ibm_backend
 
-parameter_values = model._circuit_.make_param_batch(model.weights_, X_test)
 result = run_on_ibm_backend(
-    circuit=model._circuit_.circuit,
-    observable=model._observables_[0],
-    parameter_values=parameter_values,
-    backend_name="ibm_brisbane",
-    resilience_level=1,       # 0=off; 1/2 use IBM Runtime mitigation presets
-    default_shots=4096,        # or use precision=...
+    model=model,
+    X=X_test,
+    backend_name="ibm_brisbane",   # or "fake_manila" for noise simulation
+    shots=1024,
 )
 ```
 
@@ -219,15 +229,15 @@ result = run_on_ibm_backend(
 | `DataReuploadingRegressor` | `qdr.models` | sklearn-compatible regressor |
 | `DataReuploadingCircuit` | `qdr.circuits` | parameterized re-uploading circuit |
 | `ReuploadingFeatureMap` | `qdr.circuits` | fixed-weight feature map (no training) |
-| `ParameterShiftGradient` | `qdr.training` | parameter-shift gradients for expectation values |
+| `ParameterShiftGradient` | `qdr.training` | exact quantum gradients via parameter shift |
 | `SPSA` | `qdr.training` | gradient-free stochastic optimizer |
 | `COBYLA` | `qdr.training` | derivative-free local optimizer |
 | `ADAM` | `qdr.training` | adaptive moment estimation optimizer |
-| `BenchmarkRunner` | `qdr.benchmarks` | benchmarks vs. LogReg, SVM, Random Forest, MLP, optional XGBoost |
+| `BenchmarkRunner` | `qdr.benchmarks` | benchmarks vs. MLP, SVM, logistic regression |
 | `plot_decision_boundary` | `qdr.visualization` | 2D decision boundary plot |
 | `plot_loss_curve` | `qdr.visualization` | training loss over iterations |
-| `plot_benchmark_comparison` | `qdr.visualization` | benchmark metric comparison |
-| `plot_bloch_sphere` | `qdr.visualization` | single-qubit Bloch sphere rendering |
+| `plot_bloch_trajectory` | `qdr.visualization` | qubit state on Bloch sphere per layer |
+| `plot_parameter_landscape` | `qdr.visualization` | 2D cost landscape scan |
 | `run_on_ibm_backend` | `qdr.hardware` | execution on IBM Quantum real hardware |
 
 Full API documentation: [`docs/api/`](docs/api/)
@@ -283,45 +293,18 @@ The library supports three execution modes:
 | Noisy simulation | `AerSimulator` + noise model | Configurable | Pre-hardware testing |
 | Real hardware | `qiskit_ibm_runtime.EstimatorV2` | Device noise | Production experiments |
 
-Training with `fit()` uses local estimators only. Hardware execution is exposed
-through `qdr.hardware.run_on_ibm_backend()` so that authentication, transpilation,
-queue time, and real-device cost are explicit.
-
-`run_on_ibm_backend()` uses Qiskit Runtime `EstimatorV2(mode=backend)`, transpiles
-the circuit to the selected backend, applies the ISA layout to the observable,
-and returns one expectation value per parameter row. `default_shots` and
-`precision` are mutually exclusive because Runtime shot settings override
-precision targets.
-
-Parameter-shift gradients are usually impractical on real hardware: with `P`
-trainable weights, one MSE gradient call requires `2P + 1` batched circuit
-evaluations per observable (`2P` shifted evaluations plus one current-prediction
-evaluation for the residuals). The default classifier (`n_qubits=2`,
-`n_layers=5`, `encoding="rx_ry_rz"`) has `P = 5 * 2 * 3 = 30`, so one gradient
-call requires 61 executions. With `n_qubits=6`, `n_layers=5`, the model has
-`P = 90`, requiring 181 executions per gradient call. For real IBM Quantum runs,
-prefer SPSA or COBYLA unless you have explicitly budgeted for parameter-shift
-execution.
+All modes share the same API — switching is a single `backend=` argument.
 
 ---
 
 ## Benchmarking
 
 `BenchmarkRunner` evaluates models using stratified k-fold cross-validation and
-reports: accuracy, weighted F1-score, training time, prediction time, and
-cross-validation mean/std when enabled.
+reports: accuracy, F1-score (macro), precision, recall, MCC, and training time.
 
-The runner accepts any NumPy-compatible feature matrix and label vector; the
-examples use Iris and Moons datasets from scikit-learn.
+Supported datasets out of the box: Iris, Moons, Circles, Wine, reduced MNIST.
 
-`BenchmarkRunner` does not transform features for the quantum circuit. For QDR,
-pass the same feature representation intended for rotation angles, commonly a
-compact range such as `[-pi, pi]`. Classical baselines that require scaling use
-their own `sklearn` pipelines.
-
-Baselines: `sklearn` Logistic Regression, SVM (RBF kernel), Random Forest, MLP,
-and optional XGBoost (`include_xgboost=True`, requiring the optional `xgboost`
-package).
+Baselines: `sklearn` MLP, SVM (RBF kernel), and Logistic Regression.
 
 ---
 
@@ -340,18 +323,10 @@ classifier with minimal qubit overhead. Entanglement across multiple qubits exte
 this expressibility with improved sample efficiency.
 
 **Implementation notes:**
-- In each gate, the angle is the sum of a trainable weight and one input
-  feature: `angle = w + x`. This mixing inside the same gate is the defining
-  feature of data re-uploading and distinguishes this architecture from
-  standard VQCs where the feature map and ansatz are separate sequential blocks.
-- Parameter-shift rules compute analytic gradients without finite-difference
-  approximation when the estimator is exact; with finite shots, the same formula
-  produces a stochastic gradient estimate.
-- Scalability is limited by current NISQ hardware and by the `2P + 1` batched
-  evaluations required by MSE parameter-shift gradients.
-- `DataReuploadingRegressor` is single-output: it maps one `<Z_0>` expectation
-  value from `[-1, 1]` into the target range observed during `fit`. Multi-output
-  regression requires a separate observable design and is not implemented.
+- Encoding and trainable parameters are kept strictly separate in the circuit
+- Parameter shift rules compute exact gradients without finite-difference approximation
+- Barren plateau risk is discussed in `docs/barren_plateaus.md`
+- Scalability is limited by current NISQ hardware; see `docs/nisq_limitations.md`
 
 ---
 
@@ -361,11 +336,11 @@ This project uses a **dual license**:
 
 | Component | License |
 |---|---|
-| Source code (`qdr/`, `tests/`, `examples/`) | [Apache License 2.0](LICENSE) |
+| Source code (`qdr/`, `tests/`, `examples/`) | [MIT License](LICENSE) |
 | Documentation, notebooks, tutorials (`docs/`, `notebooks/`) | [CC BY 4.0](LICENSE-CC-BY.txt) |
 
 **What this means in practice:**
-- You can use, modify, and redistribute the code freely under Apache 2.0 terms (with attribution and patent grant).
+- You can use, modify, and redistribute the code freely under MIT terms.
 - If you reuse or adapt the documentation or notebooks, you must credit the author.
 - Academic publications using this library should include the citation below.
 
@@ -374,7 +349,8 @@ This project uses a **dual license**:
 ## Citation
 
 If you use this library in research or academic work, please cite both the original
-paper and this software:
+paper and this software. If your work involves UAV anomaly detection or the QML
+benchmark evaluation, also cite the associated study below.
 
 **Original method:**
 ```bibtex
@@ -394,14 +370,46 @@ paper and this software:
 **This software:**
 ```bibtex
 @software{duranleon2026qdr,
-  title     = {qiskit-data-reuploading: A pip-installable sklearn-compatible library for data re-uploading quantum classifiers on Qiskit 2.x},
-  author    = {Carlos Andres Duran Paredes and Javier Le{\'o}n Calder{\'o}n},
+  title     = {qiskit-data-reuploading: A pip-installable sklearn-compatible library
+               for data re-uploading quantum classifiers on Qiskit 2.x},
+  author    = {Carlos Andr{\'e}s Dur{\'a}n Paredes and
+               Javier Esteban Le{\'o}n Calder{\'o}n and
+               Nicol{\'a}s S{\'a}nchez Perea and
+               German Dar{\'i}o D{\'i}az and
+               Camilo Segura},
   year      = {2026},
   url       = {https://github.com/Carlosandp/qiskit-data-reuploading},
-  license   = {Apache-2.0 (code) / CC BY 4.0 (docs)},
+  license   = {MIT (code) / CC BY 4.0 (docs)},
   note      = {Compatible with Qiskit 2.x. Not affiliated with IBM.}
 }
 ```
+
+**Associated study — UAV anomaly detection benchmark:**
+```bibtex
+@article{duran2026qml,
+  title     = {Quantum Machine Learning for Cyber-Physical Anomaly Detection in
+               Unmanned Aerial Vehicles: A Leakage-Free Evaluation with
+               Proxy-Audited Feature Sets},
+  author    = {Dur{\'a}n Paredes, Carlos A. and
+               Le{\'o}n Calder{\'o}n, Javier E. and
+               S{\'a}nchez Perea, Nicol{\'a}s and
+               D{\'i}az, German Dar{\'i}o and
+               Segura Quintero, Camilo},
+  year      = {2026},
+  eprint    = {2605.19233},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CR},
+  doi       = {10.48550/arXiv.2605.19233},
+  url       = {https://arxiv.org/abs/2605.19233},
+  note      = {10 pages, 7 figures, 1 table; open Qiskit 2.x implementation
+               available at https://github.com/Carlosandp/qiskit-data-reuploading}
+}
+```
+
+> **Preprint:** Durán Paredes et al. (2026). *Quantum Machine Learning for
+> Cyber-Physical Anomaly Detection in Unmanned Aerial Vehicles: A Leakage-Free
+> Evaluation with Proxy-Audited Feature Sets.* arXiv:2605.19233 [cs.CR].
+> https://arxiv.org/abs/2605.19233
 
 ---
 
