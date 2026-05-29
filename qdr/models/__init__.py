@@ -1,3 +1,5 @@
+"""Sklearn-compatible quantum model implementations."""
+
 from qdr.models.classifier import DataReuploadingClassifier
 from qdr.models.regressor import DataReuploadingRegressor
 

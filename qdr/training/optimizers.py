@@ -51,6 +51,18 @@ class OptimizeResult:
 
 
 def _validate_positive_int(name: str, value: int) -> int:
+    """Validate that a hyperparameter is a positive integer.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate value to validate.
+
+    Returns:
+        The value cast to a plain Python int.
+
+    Raises:
+        ValueError: If value is a bool, not an integer, or less than 1.
+    """
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise ValueError(f"{name} must be a positive integer, got {value!r}.")
     value = int(value)
@@ -60,6 +72,18 @@ def _validate_positive_int(name: str, value: int) -> int:
 
 
 def _validate_positive_real(name: str, value: float) -> float:
+    """Validate that a hyperparameter is a finite, strictly positive real number.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate value to validate.
+
+    Returns:
+        The value cast to a Python float.
+
+    Raises:
+        ValueError: If value is non-finite, not a real number, or not > 0.
+    """
     if isinstance(value, bool) or not isinstance(value, Real) or not np.isfinite(value):
         raise ValueError(f"{name} must be a finite positive number, got {value!r}.")
     value = float(value)
@@ -69,6 +93,18 @@ def _validate_positive_real(name: str, value: float) -> float:
 
 
 def _validate_nonnegative_real(name: str, value: float) -> float:
+    """Validate that a hyperparameter is a finite, non-negative real number.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate value to validate.
+
+    Returns:
+        The value cast to a Python float.
+
+    Raises:
+        ValueError: If value is non-finite, not a real number, or negative.
+    """
     if isinstance(value, bool) or not isinstance(value, Real) or not np.isfinite(value):
         raise ValueError(f"{name} must be a finite non-negative number, got {value!r}.")
     value = float(value)
@@ -78,6 +114,18 @@ def _validate_nonnegative_real(name: str, value: float) -> float:
 
 
 def _validate_beta(name: str, value: float) -> float:
+    """Validate that an ADAM moment-decay coefficient satisfies ``0 <= value < 1``.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate decay coefficient to validate.
+
+    Returns:
+        The value cast to a Python float.
+
+    Raises:
+        ValueError: If value is non-finite, not a real number, or outside [0, 1).
+    """
     if isinstance(value, bool) or not isinstance(value, Real) or not np.isfinite(value):
         raise ValueError(f"{name} must be finite and satisfy 0 <= {name} < 1, got {value!r}.")
     value = float(value)
@@ -87,6 +135,17 @@ def _validate_beta(name: str, value: float) -> float:
 
 
 def _validate_initial_point(x0: np.ndarray) -> np.ndarray:
+    """Validate and copy the initial parameter vector.
+
+    Args:
+        x0: Starting point for the optimizer.
+
+    Returns:
+        A float64 copy of x0 as a 1D array.
+
+    Raises:
+        ValueError: If ``x0`` is not 1D, empty, or contains non-finite values.
+    """
     theta = np.asarray(x0, dtype=float)
     if theta.ndim != 1:
         raise ValueError(f"x0 must be a 1D array, got x0.ndim={theta.ndim}.")
@@ -98,6 +157,19 @@ def _validate_initial_point(x0: np.ndarray) -> np.ndarray:
 
 
 def _evaluate_objective(fun: ObjectiveFn, theta: np.ndarray) -> float:
+    """Safely call the objective function and validate the return value.
+
+    Args:
+        fun: Objective function ``f(theta) -> float``.
+        theta: Current parameter vector passed to ``fun``.
+
+    Returns:
+        The scalar objective value.
+
+    Raises:
+        ValueError: If ``fun`` does not return a scalar or returns a non-finite
+            value.
+    """
     try:
         value = float(fun(theta.copy()))
     except (TypeError, ValueError) as exc:
@@ -108,6 +180,19 @@ def _evaluate_objective(fun: ObjectiveFn, theta: np.ndarray) -> float:
 
 
 def _evaluate_gradient(gradient_fn: GradientFn, theta: np.ndarray) -> np.ndarray:
+    """Safely call the gradient function and validate the return array.
+
+    Args:
+        gradient_fn: Gradient function ``grad(theta) -> np.ndarray``.
+        theta: Current parameter vector passed to ``gradient_fn``.
+
+    Returns:
+        Gradient array with the same shape as ``theta``.
+
+    Raises:
+        ValueError: If the gradient has a shape mismatch or contains non-finite
+            values.
+    """
     grad = np.asarray(gradient_fn(theta.copy()), dtype=float)
     if grad.shape != theta.shape:
         raise ValueError(f"gradient_fn returned shape {grad.shape}, expected {theta.shape}.")
@@ -117,6 +202,12 @@ def _evaluate_gradient(gradient_fn: GradientFn, theta: np.ndarray) -> np.ndarray
 
 
 def _call_callback(callback: CallbackFn | None, theta: np.ndarray) -> None:
+    """Invoke the optional callback with a copy of the current parameters.
+
+    Args:
+        callback: Callable to invoke, or ``None`` to skip.
+        theta: Current parameter vector; a copy is passed to the callback.
+    """
     if callback is not None:
         callback(theta.copy())
 

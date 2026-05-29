@@ -14,6 +14,19 @@ if TYPE_CHECKING:
 
 
 def _validate_finite_2d(name: str, values: np.ndarray) -> np.ndarray:
+    """Validate that an array is a non-empty 2D finite matrix.
+
+    Args:
+        name: Variable name used in error messages.
+        values: Array to validate.
+
+    Returns:
+        The array cast to float64.
+
+    Raises:
+        ValueError: If the array is not 2D, has zero rows or columns, or
+            contains non-finite values.
+    """
     array = np.asarray(values, dtype=float)
     if array.ndim != 2:
         raise ValueError(f"{name} must be a 2D array, got {name}.ndim={array.ndim}.")
@@ -27,6 +40,17 @@ def _validate_finite_2d(name: str, values: np.ndarray) -> np.ndarray:
 
 
 def _validate_resolution(resolution: int) -> int:
+    """Validate that the grid resolution is an integer >= 2.
+
+    Args:
+        resolution: Candidate resolution value.
+
+    Returns:
+        The resolution cast to a plain Python int.
+
+    Raises:
+        ValueError: If resolution is not an integer or is less than 2.
+    """
     if isinstance(resolution, bool) or not isinstance(resolution, Integral):
         raise ValueError(f"resolution must be an integer >= 2, got {resolution!r}.")
     resolution = int(resolution)
@@ -39,6 +63,19 @@ def _validate_feature_indices(
     feature_indices: tuple[int, int],
     n_features: int,
 ) -> tuple[int, int]:
+    """Validate that feature indices are two distinct integers in range.
+
+    Args:
+        feature_indices: Pair of feature column indices to plot.
+        n_features: Total number of features available.
+
+    Returns:
+        A tuple ``(i, j)`` of validated integer indices.
+
+    Raises:
+        ValueError: If ``feature_indices`` does not contain exactly two distinct
+            in-range integer indices.
+    """
     try:
         n_indices = len(feature_indices)
     except TypeError:
@@ -64,6 +101,14 @@ def _validate_feature_indices(
 
 
 def _ordered_unique(*arrays: np.ndarray) -> list[Any]:
+    """Collect unique values from one or more arrays in first-seen order.
+
+    Args:
+        *arrays: One or more arrays whose values to collect.
+
+    Returns:
+        A list of unique values in the order they first appear across all arrays.
+    """
     classes: list[Any] = []
     for array in arrays:
         for value in np.asarray(array, dtype=object).ravel():
@@ -73,6 +118,18 @@ def _ordered_unique(*arrays: np.ndarray) -> list[Any]:
 
 
 def _label_indices(values: np.ndarray, classes: Sequence[Any]) -> np.ndarray:
+    """Map class labels to integer indices according to a fixed class list.
+
+    Args:
+        values: Array of class labels to encode.
+        classes: Ordered list of all possible class labels.
+
+    Returns:
+        Integer index array with the same shape as ``values``.
+
+    Raises:
+        ValueError: If any label in ``values`` is not found in ``classes``.
+    """
     flat_values = np.asarray(values, dtype=object).ravel()
     encoded = np.empty(flat_values.shape[0], dtype=int)
     for row, value in enumerate(flat_values):
@@ -86,6 +143,16 @@ def _label_indices(values: np.ndarray, classes: Sequence[Any]) -> np.ndarray:
 
 
 def _class_cmap(plt: Any, n_classes: int) -> Any:
+    """Build a discrete colormap with one color per class.
+
+    Args:
+        plt: The ``matplotlib.pyplot`` module.
+        n_classes: Number of distinct classes to color.
+
+    Returns:
+        A ``ListedColormap`` with ``n_classes`` colors drawn from ``tab10``,
+        ``tab20``, or ``hsv`` depending on the class count.
+    """
     cmap_name = "tab10" if n_classes <= 10 else "tab20" if n_classes <= 20 else "hsv"
     colors = [plt.get_cmap(cmap_name, n_classes)(idx) for idx in range(n_classes)]
     from matplotlib.colors import ListedColormap

@@ -105,6 +105,16 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
     # ------------------------------------------------------------------
 
     def _build_estimator(self):
+        """Instantiate the Qiskit V2 estimator appropriate for the current settings.
+
+        Returns:
+            A ``StatevectorEstimator`` when ``shots`` is ``None``, or an
+            ``AerEstimatorV2`` configured with the requested shot count.
+
+        Raises:
+            ValueError: If ``backend`` is not ``None`` or ``shots`` is invalid.
+            ImportError: If ``shots`` is set but ``qiskit-aer`` is not installed.
+        """
         if self.backend is not None:
             raise ValueError(
                 "backend is not supported by fit(); got "
@@ -129,6 +139,21 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         return AerEstimatorV2(options={"run_options": run_options})
 
     def _validate_X(self, X: np.ndarray, *, reset: bool) -> np.ndarray:
+        """Validate the feature matrix and, on first call, record feature count.
+
+        Args:
+            X: Input feature matrix to validate.
+            reset: When ``True``, store ``n_features_in_`` from this call (used
+                during ``fit``). When ``False``, verify the feature count matches
+                the stored value (used during ``predict``).
+
+        Returns:
+            X cast to float64.
+
+        Raises:
+            ValueError: If ``X`` is not 2D, contains non-finite values, or has
+                the wrong number of features when ``reset=False``.
+        """
         X = np.asarray(X, dtype=float)
         if X.ndim != 2:
             raise ValueError(f"X must be a 2D array, got X.ndim={X.ndim}.")
@@ -142,6 +167,19 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         return X
 
     def _validate_y(self, y: np.ndarray, n_samples: int) -> np.ndarray:
+        """Validate the target label vector.
+
+        Args:
+            y: Label array to validate.
+            n_samples: Expected number of samples (must match ``X.shape[0]``).
+
+        Returns:
+            y as a numpy array.
+
+        Raises:
+            ValueError: If ``y`` is not 1D, has a length mismatch, or contains
+                ``NaN``, ``Inf``, or ``None`` entries.
+        """
         y = np.asarray(y)
         if y.ndim != 1:
             raise ValueError(f"y must be a 1D array, got y.ndim={y.ndim}.")
@@ -158,6 +196,16 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         return y
 
     def _validate_feature_capacity(self, n_features: int) -> None:
+        """Raise if the feature count exceeds the available encoding slots.
+
+        Args:
+            n_features: Number of input features from the training data.
+
+        Raises:
+            ValueError: If ``n_features`` exceeds the number of rotation-gate
+                slots implied by the current ``n_qubits``, ``n_layers``, and
+                ``encoding`` settings.
+        """
         if self.encoding not in N_ROTATIONS:
             return
         if (
@@ -178,6 +226,12 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
             )
 
     def _has_valid_qubit_count(self) -> bool:
+        """Return whether ``n_qubits`` is a usable positive integer.
+
+        Returns:
+            ``True`` if ``n_qubits`` is an integer >= 1 and not a bool,
+            ``False`` otherwise.
+        """
         return (
             not isinstance(self.n_qubits, bool)
             and isinstance(self.n_qubits, Integral)
@@ -236,6 +290,20 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         y_mapped: np.ndarray,
         observables: list[SparsePauliOp],
     ) -> float:
+        """Compute the training loss for the current weights.
+
+        Args:
+            weights: Current parameter vector, shape ``(n_weights,)``.
+            X: Feature matrix, shape ``(n_samples, n_features)``.
+            y_mapped: Target values in expectation-value scale. Shape
+                ``(n_samples,)`` for binary or ``(n_samples, n_classes)`` for
+                multiclass.
+            observables: List of observables to evaluate.
+
+        Returns:
+            Scalar loss value (MSE for binary; sum of class-wise MSEs for
+            multiclass).
+        """
         evs = self._evaluate_batch(weights, X, observables)
         if evs.ndim == 1:
             return float(np.mean((evs - y_mapped) ** 2))
@@ -249,6 +317,19 @@ class DataReuploadingClassifier(BaseEstimator, ClassifierMixin):
         y_mapped: np.ndarray,
         observables: list[SparsePauliOp],
     ):
+        """Build a gradient function using the parameter-shift rule.
+
+        Args:
+            X: Feature matrix, shape ``(n_samples, n_features)``.
+            y_mapped: Target values in expectation-value scale. Shape
+                ``(n_samples,)`` for binary or ``(n_samples, n_classes)`` for
+                multiclass.
+            observables: List of observables; one per class for multiclass.
+
+        Returns:
+            A callable ``gradient_fn(weights) -> np.ndarray`` that returns the
+            gradient of the training loss with respect to ``weights``.
+        """
         from qdr.training.gradients import ParameterShiftGradient
 
         # For multiclass we sum gradients across all observables
