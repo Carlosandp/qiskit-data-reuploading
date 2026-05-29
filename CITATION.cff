@@ -1,30 +1,56 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite the original paper and this implementation."
+message: "If you use this software, please cite the original method, the companion study, and this implementation."
 
 title: "qiskit-data-reuploading"
 version: "0.1.0"
 date-released: "2026-05-05"
 license: MIT
 repository-code: "https://github.com/Carlosandp/qiskit-data-reuploading"
+url: "https://github.com/Carlosandp/qiskit-data-reuploading"
 
 authors:
-  - name: "Carlos Andrade"
+  - family-names: "Duran Paredes"
+    given-names: "Carlos A."
+  - family-names: "Leon Calderon"
+    given-names: "Javier E."
+  - family-names: "Sanchez Perea"
+    given-names: "Nicolas"
+  - family-names: "Diaz"
+    given-names: "German Dario"
+  - family-names: "Segura Quintero"
+    given-names: "Camilo"
 
 references:
   - type: article
     title: "Data re-uploading for a universal quantum classifier"
     authors:
-      - family-names: "Pérez-Salinas"
-        given-names: "Adrián"
+      - family-names: "Perez-Salinas"
+        given-names: "Adrian"
       - family-names: "Cervera-Lierta"
         given-names: "Alba"
       - family-names: "Gil-Fuster"
         given-names: "Elies"
       - family-names: "Latorre"
-        given-names: "José Ignacio"
+        given-names: "Jose Ignacio"
     journal: "Quantum"
     volume: 4
     pages: 226
     year: 2020
     doi: "10.22331/q-2020-02-06-226"
     url: "https://doi.org/10.22331/q-2020-02-06-226"
+  - type: article
+    title: "Quantum Machine Learning for Cyber-Physical Anomaly Detection in Unmanned Aerial Vehicles: A Leakage-Free Evaluation with Proxy-Audited Feature Sets"
+    authors:
+      - family-names: "Duran Paredes"
+        given-names: "Carlos A."
+      - family-names: "Leon Calderon"
+        given-names: "Javier E."
+      - family-names: "Sanchez Perea"
+        given-names: "Nicolas"
+      - family-names: "Diaz"
+        given-names: "German Dario"
+      - family-names: "Segura Quintero"
+        given-names: "Camilo"
+    year: 2026
+    doi: "10.48550/arXiv.2605.19233"
+    url: "https://arxiv.org/abs/2605.19233"

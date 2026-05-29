@@ -3,28 +3,51 @@
 <div align="center">
 
 [![CI](https://github.com/Carlosandp/qiskit-data-reuploading/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlosandp/qiskit-data-reuploading/actions)
-[![PyPI](https://img.shields.io/pypi/v/qiskit-data-reuploading?color=blue)](https://pypi.org/project/qiskit-data-reuploading/)
-[![Coverage](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading/branch/main/graph/badge.svg)](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading)
-[![Python](https://img.shields.io/pypi/pyversions/qiskit-data-reuploading)](https://pypi.org/project/qiskit-data-reuploading/)
-[![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE-MIT)
-[![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY)
-[![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x-6929c4)](https://qiskit.org)
+[![PyPI version](https://img.shields.io/pypi/v/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
+[![Python](https://img.shields.io/pypi/pyversions/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
+[![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
+[![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY.txt)
+[![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x%20V2%20primitives-6929c4)](https://www.ibm.com/quantum/qiskit)
+[![arXiv](https://img.shields.io/badge/arXiv-2605.19233-b31b1b.svg)](https://arxiv.org/abs/2605.19233)
 
-**The first pip-installable, sklearn-compatible Python library for data re-uploading quantum classifiers, built on Qiskit 2.x V2 primitives.**
+**A PyPI-installable, scikit-learn-compatible Python library for data
+re-uploading quantum classifiers, built on Qiskit 2.x V2 primitives.**
 
-*Implements the architecture from Pérez-Salinas et al. (2020) as a production-quality,
-benchmarkable, and hardware-ready open-source package.*
+*Implements the architecture from Pérez-Salinas et al. (2020) as a
+research-grade, benchmarkable, and hardware-ready open-source package.*
 
-> Compatible with Qiskit — not affiliated with, endorsed by, or maintained by IBM.
+> Compatible with Qiskit; not affiliated with, endorsed by, or maintained by IBM.
+
+**PyPI:** <https://pypi.org/project/qiskit-data-reuploading/0.1.0/>
 
 </div>
 
 ---
 
+## Authors
+
+This package is developed in connection with the companion UAV/QML research
+effort by:
+
+| Name | Role | Affiliation |
+|---|---|---|
+| **Carlos A. Durán Paredes** | Primary package author and maintainer | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia |
+| **Javier E. León Calderón** | Theory/code audit and package collaborator | Department of Electronics Engineering, Universidad Nacional de Colombia, Manizales, Colombia |
+| **Nicolás Sánchez Perea** | Research co-author and experimental contributor | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia |
+| **German Darío Díaz** | Research co-author and physics contributor | Department of Physics, Universidad del Cauca, Popayán, Colombia |
+| **Camilo Segura Quintero** | Research co-author and CASIRI contributor | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia |
+
+Package contact: <caduranpd@gmail.com>
+
+---
+
 ## Table of Contents
 
+- [Authors](#authors)
 - [What is Data Re-uploading?](#what-is-data-re-uploading)
 - [Existing Ecosystem Analysis](#existing-ecosystem-analysis)
+- [Related Research Article](#related-research-article)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [API Overview](#api-overview)
@@ -72,7 +95,7 @@ This library addresses a gap that remained open in the Qiskit ecosystem as of mi
 
 **What did not exist before this library:**
 
-- A pip-installable `DataReuploadingClassifier` with sklearn-compatible API
+- A PyPI-installable `DataReuploadingClassifier` with sklearn-compatible API
 - Native data re-uploading support in `qiskit-machine-learning`
 - A dedicated feature map in Qiskit's `circuit.library`
 - Reproducible benchmarks (DR vs. LogReg/SVM/RF/MLP/XGBoost) on Qiskit 2.x V2 primitives
@@ -83,15 +106,31 @@ This library addresses a gap that remained open in the Qiskit ecosystem as of mi
 - V1 primitives (`StatevectorSimulator`, `algorithm_globals`)
 - `BlueprintCircuit` — deprecated upstream in favor of constructor methods
 
-This library uses **exclusively V2 primitives**: `StatevectorEstimator`,
-`StatevectorSampler` for local simulation, and `qiskit_ibm_runtime.EstimatorV2` for
-IBM Quantum hardware.
+This library uses **Qiskit V2 primitives**: `StatevectorEstimator` for exact
+local simulation, `qiskit_aer.primitives.EstimatorV2` for finite-shot local
+simulation, and `qiskit_ibm_runtime.EstimatorV2` for IBM Quantum hardware.
+
+---
+
+## Related Research Article
+
+This library supports the open Qiskit 2.x implementation associated with:
+
+> Carlos A. Durán Paredes, Javier E. León Calderón, Nicolás Sánchez Perea,
+> German Darío Díaz, and Camilo Segura Quintero. **Quantum Machine Learning for
+> Cyber-Physical Anomaly Detection in Unmanned Aerial Vehicles: A Leakage-Free
+> Evaluation with Proxy-Audited Feature Sets.** arXiv:2605.19233, submitted
+> May 19, 2026. <https://arxiv.org/abs/2605.19233>
+
+The paper evaluates quantum machine learning for UAV cyber-physical anomaly
+detection and frames this package as a reproducible Qiskit 2.x benchmark
+implementation for data re-uploading workflows.
 
 ---
 
 ## Installation
 
-**Standard:**
+**Stable release from PyPI:**
 ```bash
 pip install qiskit-data-reuploading
 ```
@@ -101,12 +140,15 @@ pip install qiskit-data-reuploading
 pip install "qiskit-data-reuploading[hardware]"
 ```
 
-**From source (latest development):**
+**Editable source install (development):**
 ```bash
 git clone https://github.com/Carlosandp/qiskit-data-reuploading.git
 cd qiskit-data-reuploading
 pip install -e ".[dev]"
 ```
+
+The public PyPI release `0.1.0` is available at
+<https://pypi.org/project/qiskit-data-reuploading/0.1.0/>.
 
 **Requirements:** Python ≥ 3.10 · Qiskit ≥ 2.0 · qiskit-machine-learning ≥ 0.9.0 · qiskit-aer ≥ 0.15
 
@@ -123,8 +165,13 @@ from sklearn.preprocessing import MinMaxScaler
 from qdr.models import DataReuploadingClassifier
 
 X, y = load_iris(return_X_y=True)
-X = MinMaxScaler().fit_transform(X)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=0
+)
+
+scaler = MinMaxScaler(feature_range=(-3.14159, 3.14159))
+X_train = scaler.fit_transform(X_train_raw)
+X_test = scaler.transform(X_test_raw)
 
 model = DataReuploadingClassifier(
     n_qubits=3,              # Multiclass: one local Z observable per class
@@ -133,7 +180,7 @@ model = DataReuploadingClassifier(
     entanglement="full",     # "none" | "linear" | "circular" | "full"
     optimizer="COBYLA",      # "COBYLA" | "SPSA" | "ADAM"
     backend=None,            # fit() requires None; use qdr.hardware for IBM backends
-    shots=None,              # None → exact; int → noisy simulation
+    shots=None,              # None = exact; int = noisy simulation
     max_iter=150,
 )
 
@@ -230,7 +277,8 @@ result = run_on_ibm_backend(
 | `plot_bloch_sphere` | `qdr.visualization` | single-qubit Bloch sphere rendering |
 | `run_on_ibm_backend` | `qdr.hardware` | execution on IBM Quantum real hardware |
 
-Full API documentation: [`docs/api/`](docs/api/)
+API details are documented in the public class/function docstrings, with
+executable usage examples under [`examples/`](examples/).
 
 ---
 
@@ -373,8 +421,8 @@ This project uses a **dual license**:
 
 ## Citation
 
-If you use this library in research or academic work, please cite both the original
-paper and this software:
+If you use this library in research or academic work, please cite the original
+data re-uploading method, the companion UAV/QML study, and this software:
 
 **Original method:**
 ```bibtex
@@ -391,11 +439,31 @@ paper and this software:
 }
 ```
 
+**Companion UAV/QML study using this implementation:**
+```bibtex
+@misc{duranparedes2026uavqml,
+  title         = {Quantum Machine Learning for Cyber-Physical Anomaly Detection
+                   in Unmanned Aerial Vehicles: A Leakage-Free Evaluation with
+                   Proxy-Audited Feature Sets},
+  author        = {Carlos A. Dur{\'a}n Paredes and Javier E. Le{\'o}n Calder{\'o}n
+                   and Nicol{\'a}s S{\'a}nchez Perea and German Dar{\'i}o D{\'i}az
+                   and Camilo Segura Quintero},
+  year          = {2026},
+  eprint        = {2605.19233},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CR},
+  doi           = {10.48550/arXiv.2605.19233},
+  url           = {https://arxiv.org/abs/2605.19233}
+}
+```
+
 **This software:**
 ```bibtex
 @software{duranleon2026qdr,
-  title     = {qiskit-data-reuploading: A pip-installable sklearn-compatible library for data re-uploading quantum classifiers on Qiskit 2.x},
-  author    = {Carlos Andres Duran Paredes and Javier Le{\'o}n Calder{\'o}n},
+  title     = {qiskit-data-reuploading: A PyPI-installable sklearn-compatible library for data re-uploading quantum classifiers on Qiskit 2.x},
+  author    = {Carlos Andres Duran Paredes and Javier E. Le{\'o}n Calder{\'o}n
+               and Nicol{\'a}s S{\'a}nchez Perea and German Dar{\'i}o D{\'i}az
+               and Camilo Segura Quintero},
   year      = {2026},
   url       = {https://github.com/Carlosandp/qiskit-data-reuploading},
   license   = {MIT (code) / CC BY 4.0 (docs)},
@@ -408,6 +476,9 @@ paper and this software:
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+This project adheres to the [Qiskit Code of Conduct](https://github.com/Qiskit/qiskit/blob/main/CODE_OF_CONDUCT.md)
+and includes a local [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for contributors.
 
 Priority areas:
 - Additional encoding schemes (ZZ, Pauli, custom)
