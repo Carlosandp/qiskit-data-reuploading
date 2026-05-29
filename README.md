@@ -5,18 +5,21 @@
 [![CI](https://github.com/Carlosandp/qiskit-data-reuploading/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlosandp/qiskit-data-reuploading/actions)
 [![PyPI version](https://img.shields.io/pypi/v/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
-[![Coverage](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading/branch/main/graph/badge.svg)](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading)
-[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://pypi.org/project/qiskit-data-reuploading/)
+[![Python](https://img.shields.io/pypi/pyversions/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
 [![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
-[![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY)
-[![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x-6929c4)](https://qiskit.org)
+[![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY.txt)
+[![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x%20V2%20primitives-6929c4)](https://www.ibm.com/quantum/qiskit)
+[![arXiv](https://img.shields.io/badge/arXiv-2605.19233-b31b1b.svg)](https://arxiv.org/abs/2605.19233)
 
-**The first pip-installable, sklearn-compatible Python library for data re-uploading quantum classifiers, built on Qiskit 2.x V2 primitives.**
+**A PyPI-installable, scikit-learn-compatible Python library for data
+re-uploading quantum classifiers, built on Qiskit 2.x V2 primitives.**
 
-*Implements the architecture from Pérez-Salinas et al. (2020) as a production-quality,
-benchmarkable, and hardware-ready open-source package.*
+*Implements the architecture from Pérez-Salinas et al. (2020) as a
+research-grade, benchmarkable, and hardware-ready open-source package.*
 
-> Compatible with Qiskit — not affiliated with, endorsed by, or maintained by IBM.
+> Compatible with Qiskit; not affiliated with, endorsed by, or maintained by IBM.
+
+**PyPI:** <https://pypi.org/project/qiskit-data-reuploading/0.1.0/>
 
 📦 **Now available on PyPI:** https://pypi.org/project/qiskit-data-reuploading/
 
@@ -35,7 +38,7 @@ This library is developed and maintained by:
 | Name | Affiliation | Contact |
 |---|---|---|
 | **Carlos A. Durán Paredes** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
-| **Javier E. León Calderón** | Department of Electronics Engineering, Universidad Nacional de Colombia, Manizales, Colombia | caduranpd@gmail.com |
+| **Javier E. León Calderón** | Department of Electrical, Electronic and Computing Engineering, Universidad Nacional de Colombia, Manizales, Colombia | caduranpd@gmail.com |
 | **Nicolás Sánchez Perea** | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia | caduranpd@gmail.com |
 | **German Darío Díaz** | Department of Physics, Universidad del Cauca, Popayán, Colombia | caduranpd@gmail.com |
 | **Camilo Segura** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
@@ -46,8 +49,10 @@ This library is developed and maintained by:
 
 ## Table of Contents
 
+- [Authors](#authors)
 - [What is Data Re-uploading?](#what-is-data-re-uploading)
 - [Existing Ecosystem Analysis](#existing-ecosystem-analysis)
+- [Related Research Article](#related-research-article)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [API Overview](#api-overview)
@@ -95,7 +100,7 @@ This library addresses a gap that remained open in the Qiskit ecosystem as of mi
 
 **What did not exist before this library:**
 
-- A pip-installable `DataReuploadingClassifier` with sklearn-compatible API
+- A PyPI-installable `DataReuploadingClassifier` with sklearn-compatible API
 - Native data re-uploading support in `qiskit-machine-learning`
 - A dedicated feature map in Qiskit's `circuit.library`
 - Reproducible benchmarks (DR vs. MLP/SVM) on Qiskit 2.x V2 primitives
@@ -106,15 +111,31 @@ This library addresses a gap that remained open in the Qiskit ecosystem as of mi
 - V1 primitives (`StatevectorSimulator`, `algorithm_globals`)
 - `BlueprintCircuit` — deprecated upstream in favor of constructor methods
 
-This library uses **exclusively V2 primitives**: `StatevectorEstimator`,
-`StatevectorSampler` for local simulation, and `qiskit_ibm_runtime.EstimatorV2` for
-IBM Quantum hardware.
+This library uses **Qiskit V2 primitives**: `StatevectorEstimator` for exact
+local simulation, `qiskit_aer.primitives.EstimatorV2` for finite-shot local
+simulation, and `qiskit_ibm_runtime.EstimatorV2` for IBM Quantum hardware.
+
+---
+
+## Related Research Article
+
+This library supports the open Qiskit 2.x implementation associated with:
+
+> Carlos A. Durán Paredes, Javier E. León Calderón, Nicolás Sánchez Perea,
+> German Darío Díaz, and Camilo Segura Quintero. **Quantum Machine Learning for
+> Cyber-Physical Anomaly Detection in Unmanned Aerial Vehicles: A Leakage-Free
+> Evaluation with Proxy-Audited Feature Sets.** arXiv:2605.19233, submitted
+> May 19, 2026. <https://arxiv.org/abs/2605.19233>
+
+The paper evaluates quantum machine learning for UAV cyber-physical anomaly
+detection and frames this package as a reproducible Qiskit 2.x benchmark
+implementation for data re-uploading workflows.
 
 ---
 
 ## Installation
 
-**Standard:**
+**Stable release from PyPI:**
 ```bash
 pip install qiskit-data-reuploading
 ```
@@ -124,12 +145,15 @@ pip install qiskit-data-reuploading
 pip install "qiskit-data-reuploading[hardware]"
 ```
 
-**From source (latest development):**
+**Editable source install (development):**
 ```bash
 git clone https://github.com/Carlosandp/qiskit-data-reuploading.git
 cd qiskit-data-reuploading
 pip install -e ".[dev]"
 ```
+
+The public PyPI release `0.1.0` is available at
+<https://pypi.org/project/qiskit-data-reuploading/0.1.0/>.
 
 **Requirements:** Python ≥ 3.10 · Qiskit ≥ 2.0 · qiskit-machine-learning ≥ 0.9.0 · qiskit-aer ≥ 0.15
 
@@ -146,8 +170,13 @@ from sklearn.preprocessing import MinMaxScaler
 from qdr.models import DataReuploadingClassifier
 
 X, y = load_iris(return_X_y=True)
-X = MinMaxScaler().fit_transform(X)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=0
+)
+
+scaler = MinMaxScaler(feature_range=(-3.14159, 3.14159))
+X_train = scaler.fit_transform(X_train_raw)
+X_test = scaler.transform(X_test_raw)
 
 model = DataReuploadingClassifier(
     n_qubits=2,
@@ -155,8 +184,8 @@ model = DataReuploadingClassifier(
     encoding="rx_ry_rz",    # "rx" | "ry" | "rz" | "rx_ry_rz"
     entanglement="full",     # "none" | "linear" | "circular" | "full"
     optimizer="COBYLA",      # "COBYLA" | "SPSA" | "ADAM"
-    backend=None,            # None → StatevectorEstimator (local, exact)
-    shots=None,              # None → exact; int → noisy simulation
+    backend=None,            # fit() requires None; use qdr.hardware for IBM backends
+    shots=None,              # None = exact; int = noisy simulation
     max_iter=150,
 )
 
@@ -249,7 +278,8 @@ result = run_on_ibm_backend(
 | `plot_parameter_landscape` | `qdr.visualization` | 2D cost landscape scan |
 | `run_on_ibm_backend` | `qdr.hardware` | execution on IBM Quantum real hardware |
 
-Full API documentation: [`docs/api/`](docs/api/)
+API details are documented in the public class/function docstrings, with
+executable usage examples under [`examples/`](examples/).
 
 ---
 
@@ -376,6 +406,24 @@ benchmark evaluation, also cite the associated study below.
 }
 ```
 
+**Companion UAV/QML study using this implementation:**
+```bibtex
+@misc{duranparedes2026uavqml,
+  title         = {Quantum Machine Learning for Cyber-Physical Anomaly Detection
+                   in Unmanned Aerial Vehicles: A Leakage-Free Evaluation with
+                   Proxy-Audited Feature Sets},
+  author        = {Carlos A. Dur{\'a}n Paredes and Javier E. Le{\'o}n Calder{\'o}n
+                   and Nicol{\'a}s S{\'a}nchez Perea and German Dar{\'i}o D{\'i}az
+                   and Camilo Segura Quintero},
+  year          = {2026},
+  eprint        = {2605.19233},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CR},
+  doi           = {10.48550/arXiv.2605.19233},
+  url           = {https://arxiv.org/abs/2605.19233}
+}
+```
+
 **This software:**
 ```bibtex
 @software{duranleon2026qdr,
@@ -425,6 +473,9 @@ benchmark evaluation, also cite the associated study below.
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+This project adheres to the [Qiskit Code of Conduct](https://github.com/Qiskit/qiskit/blob/main/CODE_OF_CONDUCT.md)
+and includes a local [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for contributors.
 
 Priority areas:
 - Additional encoding schemes (ZZ, Pauli, custom)

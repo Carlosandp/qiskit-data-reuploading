@@ -22,6 +22,11 @@ pytest -v --cov=qdr
 - Type hints on all public functions
 - NumPy-style docstrings on all public classes
 
+## Code of Conduct
+
+This project follows the [Qiskit Code of Conduct](https://github.com/Qiskit/qiskit/blob/main/CODE_OF_CONDUCT.md)
+and the local [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
 ## Pull request checklist
 
 - [ ] Tests added / updated for new functionality
