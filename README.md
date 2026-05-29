@@ -19,9 +19,7 @@ research-grade, benchmarkable, and hardware-ready open-source package.*
 
 > Compatible with Qiskit; not affiliated with, endorsed by, or maintained by IBM.
 
-**PyPI:** <https://pypi.org/project/qiskit-data-reuploading/0.1.0/>
-
-📦 **Now available on PyPI:** https://pypi.org/project/qiskit-data-reuploading/
+**PyPI:** https://pypi.org/project/qiskit-data-reuploading/
 
 ```bash
 pip install qiskit-data-reuploading
