@@ -93,6 +93,18 @@ class ReuploadingFeatureMap:
 
     @staticmethod
     def _validate_positive_int(name: str, value: int) -> int:
+        """Validate that a constructor argument is a positive integer.
+
+        Args:
+            name: Parameter name used in error messages.
+            value: Candidate value to validate.
+
+        Returns:
+            The value cast to a plain Python int.
+
+        Raises:
+            ValueError: If value is a bool, not an integer, or less than 1.
+        """
         if isinstance(value, bool) or not isinstance(value, Integral):
             raise ValueError(f"{name} must be a positive integer, got {value!r}.")
         value = int(value)
@@ -101,6 +113,17 @@ class ReuploadingFeatureMap:
         return value
 
     def _validate_input_vector(self, x: np.ndarray) -> np.ndarray:
+        """Validate a single input feature vector against the expected shape.
+
+        Args:
+            x: Candidate feature array to validate.
+
+        Returns:
+            The array cast to float64 with shape ``(n_features,)``.
+
+        Raises:
+            ValueError: If the shape is wrong or any value is non-finite.
+        """
         x = np.asarray(x, dtype=float)
         expected_shape = (self.n_features,)
         if x.shape != expected_shape:

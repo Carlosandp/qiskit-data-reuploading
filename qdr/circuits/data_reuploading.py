@@ -96,6 +96,18 @@ class DataReuploadingCircuit:
 
     @staticmethod
     def _validate_positive_int(name: str, value: int) -> int:
+        """Validate that a constructor argument is a positive integer.
+
+        Args:
+            name: Parameter name used in error messages.
+            value: Candidate value to validate.
+
+        Returns:
+            The value cast to a plain Python int.
+
+        Raises:
+            ValueError: If value is a bool, not an integer, or less than 1.
+        """
         if isinstance(value, bool) or not isinstance(value, Integral):
             raise ValueError(f"{name} must be a positive integer, got {value!r}.")
         value = int(value)
@@ -159,6 +171,11 @@ class DataReuploadingCircuit:
         return qc
 
     def _add_entanglement(self, qc: QuantumCircuit) -> None:
+        """Append CNOT entanglement gates to the circuit for the current layer.
+
+        Args:
+            qc: The quantum circuit being built in-place.
+        """
         n = self.n_qubits
         if self.entanglement == "none":
             return
@@ -180,6 +197,17 @@ class DataReuploadingCircuit:
     # ------------------------------------------------------------------
 
     def _validate_weights(self, weights: np.ndarray) -> np.ndarray:
+        """Validate and coerce a weight vector to the expected shape.
+
+        Args:
+            weights: Candidate weight array to validate.
+
+        Returns:
+            The weights cast to a float64 array of shape ``(n_weights,)``.
+
+        Raises:
+            ValueError: If the shape is wrong or any value is non-finite.
+        """
         weights = np.asarray(weights, dtype=float)
         expected_shape = (self.n_weights,)
         if weights.shape != expected_shape:
@@ -189,6 +217,17 @@ class DataReuploadingCircuit:
         return weights
 
     def _validate_input_vector(self, x: np.ndarray) -> np.ndarray:
+        """Validate a single input feature vector.
+
+        Args:
+            x: Candidate feature array to validate.
+
+        Returns:
+            The array cast to float64 with shape ``(n_features,)``.
+
+        Raises:
+            ValueError: If the shape is wrong or any value is non-finite.
+        """
         x = np.asarray(x, dtype=float)
         expected_shape = (self.n_features,)
         if x.shape != expected_shape:
@@ -198,6 +237,18 @@ class DataReuploadingCircuit:
         return x
 
     def _validate_input_batch(self, X: np.ndarray) -> np.ndarray:
+        """Validate a batch of input feature vectors.
+
+        Args:
+            X: Candidate feature matrix to validate.
+
+        Returns:
+            The matrix cast to float64 with shape ``(n_samples, n_features)``.
+
+        Raises:
+            ValueError: If ``X`` is not 2D, has the wrong number of features,
+                or contains non-finite values.
+        """
         X = np.asarray(X, dtype=float)
         if X.ndim != 2:
             raise ValueError(f"X must be a 2D array, got X.ndim={X.ndim}.")

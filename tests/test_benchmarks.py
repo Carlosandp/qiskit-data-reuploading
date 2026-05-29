@@ -13,12 +13,16 @@ from qdr.models import DataReuploadingClassifier
 
 @pytest.fixture
 def small_data():
+    """Return a two-moons dataset with 30 samples for benchmarking tests."""
     X, y = make_moons(n_samples=30, noise=0.1, random_state=0)
     return X, y
 
 
 class TestBenchmarkRunner:
+    """Tests for BenchmarkRunner run/summary workflow and validation."""
+
     def test_run_returns_self(self, small_data):
+        """run() returns the BenchmarkRunner instance for method chaining."""
         X, y = small_data
         qdr = DataReuploadingClassifier(n_qubits=1, n_layers=1, max_iter=5)
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
@@ -34,6 +38,7 @@ class TestBenchmarkRunner:
         assert result is runner
 
     def test_summary_is_dataframe(self, small_data):
+        """summary() returns a pandas DataFrame with an 'accuracy' column."""
         import pandas as pd
 
         X, y = small_data
@@ -52,11 +57,13 @@ class TestBenchmarkRunner:
         assert "accuracy" in df.columns
 
     def test_summary_before_run_raises(self):
+        """summary() raises ValueError when called before run()."""
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
         with pytest.raises(ValueError, match="Call run\\(\\) before summary"):
             runner.summary()
 
     def test_summary_preserves_metric_precision(self):
+        """summary() returns metrics at full floating-point precision."""
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
         runner._results = [
             BenchmarkResult(
@@ -72,6 +79,7 @@ class TestBenchmarkRunner:
         assert df.loc["model", "predict_time_s"] == pytest.approx(0.000123456)
 
     def test_all_models_included(self, small_data):
+        """All included baseline models appear in the results by name."""
         X, y = small_data
         qdr = DataReuploadingClassifier(n_qubits=1, n_layers=1, max_iter=3)
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
@@ -84,6 +92,7 @@ class TestBenchmarkRunner:
         assert "MLP (32-16)" in names
 
     def test_accuracy_in_range(self, small_data):
+        """All reported accuracy values are in [0.0, 1.0]."""
         X, y = small_data
         qdr = DataReuploadingClassifier(n_qubits=1, n_layers=1, max_iter=5)
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
@@ -100,6 +109,7 @@ class TestBenchmarkRunner:
             assert 0.0 <= r.accuracy <= 1.0
 
     def test_default_qdr_model_used_when_none(self, small_data):
+        """qdr_model=None causes run() to create a default QDR model."""
         X, y = small_data
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
         runner.run(
@@ -115,6 +125,7 @@ class TestBenchmarkRunner:
         assert runner.results[0].model_name == "DataReuploadingClassifier"
 
     def test_default_qdr_model_adapts_to_classes_and_features(self, monkeypatch):
+        """Auto-created QDR model uses n_qubits=n_classes and n_layers scaled to n_features."""
         import qdr.models.classifier as classifier_module
 
         captured: dict[str, int] = {}
@@ -169,6 +180,7 @@ class TestBenchmarkRunner:
         assert runner.results[0].extra["classes"] == [0, 1, 2]
 
     def test_train_time_positive(self, small_data):
+        """train_time_s is strictly positive after fitting the QDR model."""
         X, y = small_data
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
         runner.run(
@@ -182,6 +194,7 @@ class TestBenchmarkRunner:
         assert runner.results[0].train_time_s > 0
 
     def test_string_labels_supported(self, small_data):
+        """run() accepts string class labels and encodes them to integers internally."""
         X, y = small_data
         labels = np.where(y == 0, "left", "right")
         qdr = DataReuploadingClassifier(n_qubits=1, n_layers=1, max_iter=3)
@@ -198,6 +211,7 @@ class TestBenchmarkRunner:
         assert runner.classes_.tolist() == ["left", "right"]
 
     def test_input_validation(self, small_data):
+        """run() raises ValueError for NaN/Inf values, empty features, length mismatch, and single-class y."""
         X, y = small_data
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
 
@@ -216,6 +230,7 @@ class TestBenchmarkRunner:
             runner.run(X, np.zeros_like(y))
 
     def test_constructor_validation(self):
+        """BenchmarkRunner.__init__() raises ValueError for invalid test_size, cv_folds, random_state, and verbose."""
         with pytest.raises(ValueError, match="test_size must satisfy"):
             BenchmarkRunner(test_size=1.0)
         with pytest.raises(ValueError, match="cv_folds must be >= 0"):
@@ -226,12 +241,14 @@ class TestBenchmarkRunner:
             BenchmarkRunner(verbose="no")
 
     def test_include_flag_validation(self, small_data):
+        """run() raises ValueError when an include_* flag receives a non-bool value."""
         X, y = small_data
         runner = BenchmarkRunner(cv_folds=0, verbose=False)
         with pytest.raises(ValueError, match="include_svm must be a bool"):
             runner.run(X, y, include_svm="yes")
 
     def test_cv_folds_must_fit_class_counts(self):
+        """run() raises ValueError when cv_folds exceeds the number of samples per class."""
         X = np.zeros((6, 2))
         y = np.array([0, 0, 0, 1, 1, 1])
         runner = BenchmarkRunner(test_size=0.5, cv_folds=4, verbose=False)
@@ -239,6 +256,7 @@ class TestBenchmarkRunner:
             runner.run(X, y)
 
     def test_test_size_must_leave_each_split_with_all_classes(self):
+        """run() raises ValueError when test_size is too small to keep all classes in both splits."""
         X = np.zeros((6, 2))
         y = np.array([0, 0, 1, 1, 2, 2])
         runner = BenchmarkRunner(test_size=0.2, cv_folds=0, verbose=False)
@@ -246,6 +264,7 @@ class TestBenchmarkRunner:
             runner.run(X, y)
 
     def test_xgboost_missing_fails_before_training(self, small_data, monkeypatch):
+        """run() raises ImportError immediately when xgboost is requested but not installed."""
         X, y = small_data
         qdr = DataReuploadingClassifier(n_qubits=1, n_layers=1, max_iter=3)
         runner = BenchmarkRunner(cv_folds=0, verbose=False)

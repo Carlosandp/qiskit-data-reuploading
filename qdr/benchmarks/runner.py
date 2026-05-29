@@ -103,6 +103,18 @@ class BenchmarkRunner:
 
     @staticmethod
     def _validate_test_size(test_size: float) -> float:
+        """Validate that the test fraction is a float strictly between 0 and 1.
+
+        Args:
+            test_size: Candidate test fraction.
+
+        Returns:
+            The value cast to float.
+
+        Raises:
+            ValueError: If test_size is not a real number in the open interval
+                (0, 1).
+        """
         if isinstance(test_size, bool) or not isinstance(test_size, Real):
             raise ValueError(f"test_size must be a float in (0, 1), got {test_size!r}.")
         test_size = float(test_size)
@@ -112,6 +124,17 @@ class BenchmarkRunner:
 
     @staticmethod
     def _validate_cv_folds(cv_folds: int) -> int:
+        """Validate that cv_folds is a non-negative integer.
+
+        Args:
+            cv_folds: Number of cross-validation folds.
+
+        Returns:
+            The value cast to int.
+
+        Raises:
+            ValueError: If cv_folds is not a non-negative integer.
+        """
         if isinstance(cv_folds, bool) or not isinstance(cv_folds, Integral):
             raise ValueError(f"cv_folds must be a non-negative integer, got {cv_folds!r}.")
         cv_folds = int(cv_folds)
@@ -121,6 +144,17 @@ class BenchmarkRunner:
 
     @staticmethod
     def _validate_random_state(random_state: int | None) -> int | None:
+        """Validate that random_state is an integer or None.
+
+        Args:
+            random_state: Candidate random seed or ``None``.
+
+        Returns:
+            The value cast to int, or ``None``.
+
+        Raises:
+            ValueError: If random_state is provided but is not an integer.
+        """
         if random_state is None:
             return None
         if isinstance(random_state, bool) or not isinstance(random_state, Integral):
@@ -129,12 +163,39 @@ class BenchmarkRunner:
 
     @staticmethod
     def _validate_include_flag(name: str, value: bool) -> bool:
+        """Validate that an include flag is a boolean.
+
+        Args:
+            name: Flag name used in error messages.
+            value: Candidate boolean value.
+
+        Returns:
+            The value unchanged.
+
+        Raises:
+            ValueError: If value is not a bool.
+        """
         if not isinstance(value, bool):
             raise ValueError(f"{name} must be a bool, got {value!r}.")
         return value
 
     @staticmethod
     def _validate_data(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Validate the feature matrix and labels and return encoded labels.
+
+        Args:
+            X: Feature matrix of shape ``(n_samples, n_features)``.
+            y: Label array of shape ``(n_samples,)``.
+
+        Returns:
+            A tuple ``(X, y_encoded, classes)`` where ``y_encoded`` holds
+            integer-encoded labels and ``classes`` is the sorted class array
+            from ``LabelEncoder``.
+
+        Raises:
+            ValueError: If ``X`` or ``y`` are invalid, contain non-finite
+                values, or have fewer than 2 distinct classes.
+        """
         X = np.asarray(X, dtype=float)
         y = np.asarray(y)
         if X.ndim != 2:
@@ -171,6 +232,17 @@ class BenchmarkRunner:
         return X, y_encoded, label_encoder.classes_
 
     def _validate_resampling(self, y_encoded: np.ndarray) -> None:
+        """Check that train/test split and CV folds are feasible for the data.
+
+        Args:
+            y_encoded: Integer-encoded label array produced by
+                :meth:`_validate_data`.
+
+        Raises:
+            ValueError: If the minimum class count is below 2, the test split
+                would leave any partition without all classes, or cv_folds
+                exceeds the minimum class count.
+        """
         classes, counts = np.unique(y_encoded, return_counts=True)
         n_classes = len(classes)
         min_count = int(counts.min())
@@ -196,10 +268,21 @@ class BenchmarkRunner:
             )
 
     def _log(self, msg: str) -> None:
+        """Print a progress message when verbose mode is enabled.
+
+        Args:
+            msg: Message to print.
+        """
         if self.verbose:
             print(msg)
 
     def _cv_splitter(self) -> StratifiedKFold | None:
+        """Return a stratified K-fold splitter, or None when CV is disabled.
+
+        Returns:
+            A ``StratifiedKFold`` instance when ``cv_folds > 1``, or ``None``
+            when cross-validation is skipped (``cv_folds`` in {0, 1}).
+        """
         if self.cv_folds <= 1:
             return None
         return StratifiedKFold(
@@ -210,6 +293,19 @@ class BenchmarkRunner:
 
     @staticmethod
     def _default_qdr_model(n_features: int, n_classes: int, random_state: int | None) -> Any:
+        """Create a default DataReuploadingClassifier sized for the dataset.
+
+        The qubit count is at least ``n_classes`` (minimum 2) and the layer
+        count is enough to provide one encoding slot per feature.
+
+        Args:
+            n_features: Number of input features.
+            n_classes: Number of distinct class labels.
+            random_state: Random seed for reproducibility.
+
+        Returns:
+            An unfitted ``DataReuploadingClassifier`` instance.
+        """
         from qdr.models.classifier import DataReuploadingClassifier
 
         n_qubits = max(2, n_classes)
@@ -234,6 +330,23 @@ class BenchmarkRunner:
         y_full: np.ndarray,
         cv: StratifiedKFold | None,
     ) -> BenchmarkResult:
+        """Fit, evaluate, and optionally cross-validate a single model.
+
+        Args:
+            name: Display name for the model.
+            model: Unfitted sklearn-compatible estimator.
+            X_train: Training feature matrix.
+            X_test: Holdout feature matrix.
+            y_train: Training labels (integer-encoded).
+            y_test: Holdout labels (integer-encoded).
+            X_full: Full feature matrix for cross-validation.
+            y_full: Full labels for cross-validation.
+            cv: Stratified K-fold splitter, or ``None`` to skip CV.
+
+        Returns:
+            A :class:`BenchmarkResult` with accuracy, F1, timing, and optional
+            cross-validation statistics.
+        """
         self._log(f"  -> Training {name} ...")
 
         t0 = time.perf_counter()

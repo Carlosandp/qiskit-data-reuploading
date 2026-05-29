@@ -7,12 +7,14 @@ from sklearn.datasets import make_classification, make_moons, make_regression
 
 @pytest.fixture(scope="session")
 def binary_dataset():
+    """Return a two-moons binary classification dataset with 40 samples."""
     X, y = make_moons(n_samples=40, noise=0.15, random_state=0)
     return X, y
 
 
 @pytest.fixture(scope="session")
 def multiclass_dataset():
+    """Return a three-class classification dataset with string labels."""
     X, y = make_classification(
         n_samples=60,
         n_features=4,
@@ -26,6 +28,7 @@ def multiclass_dataset():
 
 @pytest.fixture(scope="session")
 def regression_dataset():
+    """Return a regression dataset with 40 samples and 2 features."""
     X, y = make_regression(n_samples=40, n_features=2, noise=5.0, random_state=0)
     return X, y
 

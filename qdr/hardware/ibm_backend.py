@@ -13,18 +13,52 @@ if TYPE_CHECKING:
 
 
 def _validate_nonempty_string(name: str, value: str) -> str:
+    """Validate that a value is a non-empty, non-blank string.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate string to validate.
+
+    Returns:
+        The original string value.
+
+    Raises:
+        ValueError: If value is not a string or is blank.
+    """
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} must be a non-empty string, got {value!r}.")
     return value
 
 
 def _validate_optional_token(token: str | None) -> str | None:
+    """Validate an optional IBM Quantum API token string.
+
+    Args:
+        token: API token or ``None`` to use the saved account.
+
+    Returns:
+        The token unchanged, or ``None``.
+
+    Raises:
+        ValueError: If token is provided but blank.
+    """
     if token is None:
         return None
     return _validate_nonempty_string("token", token)
 
 
 def _validate_optimization_level(optimization_level: int) -> int:
+    """Validate that the Qiskit transpiler optimization level is in [0, 3].
+
+    Args:
+        optimization_level: Candidate level value.
+
+    Returns:
+        The level cast to a plain Python int.
+
+    Raises:
+        ValueError: If the value is not an integer in [0, 3].
+    """
     if isinstance(optimization_level, bool) or not isinstance(optimization_level, Integral):
         raise ValueError(
             f"optimization_level must be an integer in [0, 3], got {optimization_level!r}."
@@ -38,6 +72,17 @@ def _validate_optimization_level(optimization_level: int) -> int:
 
 
 def _validate_resilience_level(resilience_level: int | None) -> int | None:
+    """Validate that the IBM Runtime resilience level is 0, 1, 2, or None.
+
+    Args:
+        resilience_level: Candidate resilience level or ``None``.
+
+    Returns:
+        The level cast to int, or ``None``.
+
+    Raises:
+        ValueError: If the value is not one of {0, 1, 2, None}.
+    """
     if resilience_level is None:
         return None
     if isinstance(resilience_level, bool) or not isinstance(resilience_level, Integral):
@@ -49,6 +94,18 @@ def _validate_resilience_level(resilience_level: int | None) -> int | None:
 
 
 def _validate_positive_int(name: str, value: int | None) -> int | None:
+    """Validate that an optional integer parameter is positive.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate value or ``None``.
+
+    Returns:
+        The value cast to int, or ``None``.
+
+    Raises:
+        ValueError: If value is provided but is not a positive integer.
+    """
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, Integral):
@@ -60,6 +117,18 @@ def _validate_positive_int(name: str, value: int | None) -> int | None:
 
 
 def _validate_nonnegative_int(name: str, value: int | None) -> int | None:
+    """Validate that an optional integer parameter is non-negative.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate value or ``None``.
+
+    Returns:
+        The value cast to int, or ``None``.
+
+    Raises:
+        ValueError: If value is provided but is not a non-negative integer.
+    """
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, Integral):
@@ -71,6 +140,17 @@ def _validate_nonnegative_int(name: str, value: int | None) -> int | None:
 
 
 def _validate_precision(precision: float | None) -> float | None:
+    """Validate that the optional precision argument is a finite positive number.
+
+    Args:
+        precision: Target precision value or ``None``.
+
+    Returns:
+        The value cast to float, or ``None``.
+
+    Raises:
+        ValueError: If precision is provided but is not a finite positive number.
+    """
     if precision is None:
         return None
     if isinstance(precision, bool) or not isinstance(precision, Real) or not np.isfinite(precision):
@@ -82,6 +162,14 @@ def _validate_precision(precision: float | None) -> float | None:
 
 
 def _num_parameters(circuit: "QuantumCircuit") -> int:
+    """Return the number of free parameters in a Qiskit circuit.
+
+    Args:
+        circuit: A Qiskit ``QuantumCircuit``.
+
+    Returns:
+        The number of unbound parameters as a plain Python int.
+    """
     num_parameters = getattr(circuit, "num_parameters", None)
     if num_parameters is not None:
         return int(num_parameters)
@@ -92,6 +180,19 @@ def _validate_parameter_values(
     circuit: "QuantumCircuit",
     parameter_values: np.ndarray,
 ) -> np.ndarray:
+    """Validate and reshape the parameter value array against a circuit.
+
+    Args:
+        circuit: Circuit whose parameter count sets the expected column count.
+        parameter_values: 1D (single sample) or 2D (batch) parameter array.
+
+    Returns:
+        A float64 array of shape ``(n_samples, n_params)``.
+
+    Raises:
+        ValueError: If the array has the wrong number of dimensions, wrong
+            column count, zero rows, or contains non-finite values.
+    """
     values = np.asarray(parameter_values, dtype=float)
     expected_params = _num_parameters(circuit)
     if values.ndim == 1:
@@ -128,6 +229,27 @@ def _validate_run_options(
     seed_estimator: int | None,
     precision: float | None,
 ) -> tuple[np.ndarray, str, str | None, str, int, int | None, int | None, int | None, float | None]:
+    """Validate all arguments of :func:`run_on_ibm_backend` before any I/O.
+
+    Args:
+        circuit: Parameterized circuit without measurements.
+        parameter_values: Parameter array to validate against the circuit.
+        backend_name: IBM Quantum backend name.
+        token: Optional API token.
+        channel: Runtime channel name.
+        optimization_level: Qiskit transpiler optimization level.
+        resilience_level: IBM Runtime resilience level or ``None``.
+        default_shots: Total shots per circuit or ``None``.
+        seed_estimator: Estimator random seed or ``None``.
+        precision: Target precision or ``None``.
+
+    Returns:
+        A tuple of validated, coerced argument values in the same order.
+
+    Raises:
+        ValueError: If any argument is invalid or ``default_shots`` and
+            ``precision`` are both specified.
+    """
     values = _validate_parameter_values(circuit, parameter_values)
     backend_name = _validate_nonempty_string("backend_name", backend_name)
     token = _validate_optional_token(token)
@@ -153,6 +275,14 @@ def _validate_run_options(
 
 
 def _load_runtime():
+    """Import qiskit-ibm-runtime classes or raise a helpful ImportError.
+
+    Returns:
+        A tuple ``(EstimatorV2, QiskitRuntimeService, EstimatorOptions)``.
+
+    Raises:
+        ImportError: If ``qiskit-ibm-runtime`` is not installed.
+    """
     try:
         from qiskit_ibm_runtime import EstimatorV2, QiskitRuntimeService
         from qiskit_ibm_runtime.options import EstimatorOptions
@@ -170,6 +300,17 @@ def _estimator_options(
     default_shots: int | None,
     seed_estimator: int | None,
 ) -> Any:
+    """Build an ``EstimatorOptions`` object from optional keyword arguments.
+
+    Args:
+        EstimatorOptions: The options class from ``qiskit_ibm_runtime``.
+        resilience_level: Resilience level to set, or ``None`` to leave unset.
+        default_shots: Shot count to set, or ``None`` to leave unset.
+        seed_estimator: Estimator seed to set, or ``None`` to leave unset.
+
+    Returns:
+        A configured ``EstimatorOptions`` instance.
+    """
     options = EstimatorOptions()
     if resilience_level is not None:
         options.resilience_level = resilience_level
@@ -181,6 +322,14 @@ def _estimator_options(
 
 
 def _backend_name(backend: Any) -> str:
+    """Extract the name string from an IBM backend object.
+
+    Args:
+        backend: An IBM Quantum backend object (callable or attribute ``.name``).
+
+    Returns:
+        The backend name as a plain string.
+    """
     name = getattr(backend, "name", None)
     if callable(name):
         return str(name())

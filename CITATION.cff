@@ -4,7 +4,7 @@ message: "If you use this software, please cite the original method, the compani
 title: "qiskit-data-reuploading"
 version: "0.1.0"
 date-released: "2026-05-05"
-license: MIT
+license: Apache-2.0
 repository-code: "https://github.com/Carlosandp/qiskit-data-reuploading"
 url: "https://github.com/Carlosandp/qiskit-data-reuploading"
 
@@ -13,7 +13,7 @@ authors:
     given-names: "Carlos A."
   - family-names: "Leon Calderon"
     given-names: "Javier E."
-  - family-names: "Sanchez Perea"
+  - family-names: "Sanchez Perez"
     given-names: "Nicolas"
   - family-names: "Diaz"
     given-names: "German Dario"

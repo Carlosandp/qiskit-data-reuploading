@@ -28,6 +28,18 @@ N_ROTATIONS: Mapping[str, int] = MappingProxyType(
 
 
 def _validate_positive_int(name: str, value: int) -> int:
+    """Validate that a parameter is a positive integer.
+
+    Args:
+        name: Parameter name used in error messages.
+        value: Candidate value to validate.
+
+    Returns:
+        The value cast to a plain Python int.
+
+    Raises:
+        ValueError: If value is a bool, not an integer, or less than 1.
+    """
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise ValueError(f"{name} must be a positive integer, got {value!r}.")
     value = int(value)

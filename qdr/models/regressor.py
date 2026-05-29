@@ -102,6 +102,16 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
     # ------------------------------------------------------------------
 
     def _build_estimator(self):
+        """Instantiate the Qiskit V2 estimator appropriate for the current settings.
+
+        Returns:
+            A ``StatevectorEstimator`` when ``shots`` is ``None``, or an
+            ``AerEstimatorV2`` configured with the requested shot count.
+
+        Raises:
+            ValueError: If ``backend`` is not ``None`` or ``shots`` is invalid.
+            ImportError: If ``shots`` is set but ``qiskit-aer`` is not installed.
+        """
         if self.backend is not None:
             raise ValueError(
                 "backend is not supported by fit(); got "
@@ -125,6 +135,21 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         return AerEstimatorV2(options={"run_options": run_options})
 
     def _validate_X(self, X: np.ndarray, *, reset: bool) -> np.ndarray:
+        """Validate the feature matrix and optionally record feature count.
+
+        Args:
+            X: Input feature matrix to validate.
+            reset: When ``True``, accept any feature count (used during
+                ``fit``). When ``False``, verify the count matches the stored
+                ``n_features_in_`` (used during ``predict``).
+
+        Returns:
+            X cast to float64.
+
+        Raises:
+            ValueError: If ``X`` is not 2D, contains non-finite values, or the
+                feature count mismatches when ``reset=False``.
+        """
         X = np.asarray(X, dtype=float)
         if X.ndim != 2:
             raise ValueError(f"X must be a 2D array, got X.ndim={X.ndim}.")
@@ -138,6 +163,19 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         return X
 
     def _validate_y(self, y: np.ndarray, n_samples: int) -> np.ndarray:
+        """Validate the target value vector.
+
+        Args:
+            y: Target array to validate.
+            n_samples: Expected number of samples (must match ``X.shape[0]``).
+
+        Returns:
+            y cast to float64.
+
+        Raises:
+            ValueError: If ``y`` is not 1D, has a length mismatch, or contains
+                non-finite values.
+        """
         y = np.asarray(y, dtype=float)
         if y.ndim != 1:
             raise ValueError(f"y must be a 1D array, got y.ndim={y.ndim}.")
@@ -151,6 +189,16 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
         return y
 
     def _validate_feature_capacity(self, n_features: int) -> None:
+        """Raise if the feature count exceeds the available encoding slots.
+
+        Args:
+            n_features: Number of input features from the training data.
+
+        Raises:
+            ValueError: If ``n_features`` exceeds the number of rotation-gate
+                slots implied by the current ``n_qubits``, ``n_layers``, and
+                ``encoding`` settings.
+        """
         if self.encoding not in N_ROTATIONS:
             return
         if (
@@ -171,10 +219,25 @@ class DataReuploadingRegressor(BaseEstimator, RegressorMixin):
             )
 
     def _observable(self) -> SparsePauliOp:
+        """Build the Z observable on qubit 0 for the current circuit size.
+
+        Returns:
+            A ``SparsePauliOp`` representing ``<Z_0>`` using Qiskit's
+            little-endian convention (rightmost character = qubit 0).
+        """
         n = self.n_qubits
         return SparsePauliOp("I" * (n - 1) + "Z")
 
     def _evaluate_batch(self, weights: np.ndarray, X: np.ndarray) -> np.ndarray:
+        """Evaluate the Z-observable expectation for a batch of samples.
+
+        Args:
+            weights: Current parameter vector, shape ``(n_weights,)``.
+            X: Feature matrix, shape ``(n_samples, n_features)``.
+
+        Returns:
+            Expectation values in ``[-1, 1]``, shape ``(n_samples,)``.
+        """
         param_values = self._circuit_.make_param_batch(weights, X)
         pub = (self._circuit_.circuit, self._obs_, param_values)
         job = self._estimator_.run([pub])

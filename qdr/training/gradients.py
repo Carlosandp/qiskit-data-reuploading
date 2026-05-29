@@ -75,6 +75,20 @@ class ParameterShiftGradient:
         weights: np.ndarray,
         X: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray]:
+        """Validate and coerce the weight vector and feature matrix.
+
+        Args:
+            weights: Candidate weight array to validate.
+            X: Candidate feature matrix to validate.
+
+        Returns:
+            A tuple ``(weights, X)`` both cast to float64 and verified for
+            shape and finiteness.
+
+        Raises:
+            ValueError: If either array has an invalid shape or contains
+                non-finite values.
+        """
         weights = np.asarray(weights, dtype=float)
         X = np.asarray(X, dtype=float)
         if weights.ndim != 1:
@@ -99,6 +113,19 @@ class ParameterShiftGradient:
 
     @staticmethod
     def _validate_targets(y: np.ndarray, n_samples: int) -> np.ndarray:
+        """Validate the target value vector for gradient computation.
+
+        Args:
+            y: Target array to validate.
+            n_samples: Expected length (must match the number of rows in X).
+
+        Returns:
+            y cast to float64 with shape ``(n_samples,)``.
+
+        Raises:
+            ValueError: If ``y`` is not 1D, has a length mismatch, or contains
+                non-finite values.
+        """
         y = np.asarray(y, dtype=float)
         if y.ndim != 1:
             raise ValueError(f"y must be a 1D array, got y.ndim={y.ndim}.")

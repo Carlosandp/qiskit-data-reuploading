@@ -18,18 +18,28 @@ from qdr.visualization import (
 
 
 class RecordingModel:
+    """Minimal classifier stub that records the last X passed to predict().
+
+    Used to assert that plot_decision_boundary sends the expected grid array.
+    """
+
     classes_ = np.array([0, 1])
 
     def __init__(self) -> None:
+        """Initialize with no recorded prediction input."""
         self.last_X: np.ndarray | None = None
 
     def predict(self, X: np.ndarray) -> np.ndarray:
+        """Store X and return labels based on column 2 vs column 3 comparison."""
         self.last_X = np.asarray(X, dtype=float)
         return (self.last_X[:, 2] > self.last_X[:, 3]).astype(int)
 
 
 class TestDecisionBoundary:
+    """Tests for plot_decision_boundary(): grid construction and input validation."""
+
     def test_uses_selected_feature_columns_and_mean_slice(self):
+        """Decision boundary grid varies only the selected features; others are fixed at their mean."""
         X = np.array(
             [
                 [1.0, 10.0, -1.0, -2.0],
@@ -53,6 +63,7 @@ class TestDecisionBoundary:
         plt.close(fig)
 
     def test_rejects_invalid_decision_boundary_inputs(self):
+        """plot_decision_boundary() raises ValueError for malformed resolution, indices, X, and y."""
         X = np.ones((3, 2))
         y = np.array([0, 1, 0])
         model = RecordingModel()
@@ -82,7 +93,10 @@ class TestDecisionBoundary:
 
 
 class TestLossCurve:
+    """Tests for plot_loss_curve(): axis labels, data, and input validation."""
+
     def test_plots_loss_curve(self):
+        """plot_loss_curve() returns a figure with correctly labelled axes and plotted values."""
         fig = plot_loss_curve([1.0, 0.5, 0.25])
         ax = fig.axes[0]
 
@@ -92,6 +106,7 @@ class TestLossCurve:
         plt.close(fig)
 
     def test_rejects_invalid_loss_history(self):
+        """plot_loss_curve() raises ValueError for empty, non-finite, or multi-dimensional histories."""
         with pytest.raises(ValueError, match="loss_history must contain at least one value"):
             plot_loss_curve([])
         with pytest.raises(ValueError, match="loss_history contains NaN or Inf"):
@@ -101,7 +116,10 @@ class TestLossCurve:
 
 
 class TestBenchmarkComparison:
+    """Tests for plot_benchmark_comparison(): metric rendering and input validation."""
+
     def test_supports_probability_and_time_metrics(self):
+        """plot_benchmark_comparison() sets y-axis limits correctly for probability and time metrics."""
         df = pd.DataFrame(
             {
                 "accuracy": [0.8, 0.9],
@@ -120,6 +138,7 @@ class TestBenchmarkComparison:
         plt.close(fig_time)
 
     def test_rejects_invalid_benchmark_inputs(self):
+        """plot_benchmark_comparison() raises ValueError for unknown metrics, empty df, and non-finite values."""
         df = pd.DataFrame({"accuracy": [0.8]}, index=["QDR"])
 
         with pytest.raises(ValueError, match="metric 'f1' is not present"):
@@ -139,13 +158,17 @@ class TestBenchmarkComparison:
 
 
 class TestBlochSphere:
+    """Tests for plot_bloch_sphere(): 3-D axes creation and statevector validation."""
+
     def test_plots_normalized_single_qubit_state(self):
+        """plot_bloch_sphere() returns a figure with a 3-D axes for a valid |0⟩ statevector."""
         fig = plot_bloch_sphere(np.array([1.0 + 0.0j, 0.0 + 0.0j]))
 
         assert hasattr(fig.axes[0], "get_zlim")
         plt.close(fig)
 
     def test_rejects_invalid_bloch_inputs(self):
+        """plot_bloch_sphere() raises ValueError for wrong shape, unnormalized, non-finite, and 2-D ax."""
         with pytest.raises(ValueError, match="statevector must have shape"):
             plot_bloch_sphere(np.array([1.0, 0.0, 0.0]))
         with pytest.raises(ValueError, match="statevector must be normalized"):

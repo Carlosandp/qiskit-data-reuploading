@@ -8,6 +8,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load_example(path: Path):
+    """Load and execute an example script as a module without calling its main() function.
+
+    Args:
+        path: Absolute path to the example .py file.
+
+    Returns:
+        The loaded module object.
+    """
     spec = importlib.util.spec_from_file_location(path.stem, path)
     assert spec is not None
     assert spec.loader is not None
@@ -17,12 +25,14 @@ def _load_example(path: Path):
 
 
 def test_examples_import_without_running_training():
+    """Each example script can be imported and exposes a callable main() without executing training."""
     for path in sorted((ROOT / "examples").glob("*.py")):
         module = _load_example(path)
         assert callable(module.main)
 
 
 def test_examples_avoid_pre_split_scaler_fit_transform():
+    """Example scripts do not call fit_transform(X) on the full dataset before splitting."""
     for path in sorted((ROOT / "examples").glob("*.py")):
         source = path.read_text(encoding="utf-8")
         assert "fit_transform(X)" not in source
