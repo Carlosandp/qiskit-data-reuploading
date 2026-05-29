@@ -3,7 +3,8 @@
 <div align="center">
 
 [![CI](https://github.com/Carlosandp/qiskit-data-reuploading/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlosandp/qiskit-data-reuploading/actions)
-[![PyPI](https://img.shields.io/badge/PyPI-pre--release-orange)](https://pypi.org/project/qiskit-data-reuploading/)
+[![PyPI version](https://img.shields.io/pypi/v/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/qiskit-data-reuploading.svg)](https://pypi.org/project/qiskit-data-reuploading/)
 [![Coverage](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading/branch/main/graph/badge.svg)](https://codecov.io/gh/Carlosandp/qiskit-data-reuploading)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://pypi.org/project/qiskit-data-reuploading/)
 [![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
@@ -17,6 +18,12 @@ benchmarkable, and hardware-ready open-source package.*
 
 > Compatible with Qiskit — not affiliated with, endorsed by, or maintained by IBM.
 
+📦 **Now available on PyPI:** https://pypi.org/project/qiskit-data-reuploading/
+
+```bash
+pip install qiskit-data-reuploading
+```
+
 </div>
 
 ---
@@ -28,10 +35,12 @@ This library is developed and maintained by:
 | Name | Affiliation | Contact |
 |---|---|---|
 | **Carlos A. Durán Paredes** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
-| **Javier E. León Calderón** | Department of Electronics Engineering, Universidad Nacional de Colombia, Manizales, Colombia | javleonca@unal.edu.co |
-| **Nicolás Sánchez Perea** | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia | nicolassp@unicauca.edu.co |
-| **German Darío Díaz** | Department of Physics, Universidad del Cauca, Popayán, Colombia | germandiaz@unicauca.edu.co |
-| **Camilo Segura** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | camilosegura6@gmail.com |
+| **Javier E. León Calderón** | Department of Electronics Engineering, Universidad Nacional de Colombia, Manizales, Colombia | caduranpd@gmail.com |
+| **Nicolás Sánchez Perea** | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia | caduranpd@gmail.com |
+| **German Darío Díaz** | Department of Physics, Universidad del Cauca, Popayán, Colombia | caduranpd@gmail.com |
+| **Camilo Segura** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
+
+**Contact:** caduranpd@gmail.com
 
 ---
 
