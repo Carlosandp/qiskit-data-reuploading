@@ -36,10 +36,10 @@ This library is developed and maintained by:
 | Name | Affiliation | Contact |
 |---|---|---|
 | **Carlos A. Durán Paredes** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
-| **Javier E. León Calderón** | Department of Electrical, Electronic and Computing Engineering, Universidad Nacional de Colombia, Manizales, Colombia | caduranpd@gmail.com |
-| **Nicolás Sánchez Perea** | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia | caduranpd@gmail.com |
-| **German Darío Díaz** | Department of Physics, Universidad del Cauca, Popayán, Colombia | caduranpd@gmail.com |
-| **Camilo Segura** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | caduranpd@gmail.com |
+| **Javier E. León Calderón** | Department of Electrical, Electronic and Computing Engineering, Universidad Nacional de Colombia, Manizales, Colombia | javleonca@unal.edu.co |
+| **Nicolás Sánchez Perez** | Department of Electronics Engineering, Universidad del Cauca, Popayán, Colombia | nicolassp@unicauca.edu.co |
+| **German Darío Díaz** | Department of Physics, Universidad del Cauca, Popayán, Colombia | germandardiaz@gmail.com |
+| **Camilo Segura** | Corporation for Aerospace Initiatives, Research and Innovation (CASIRI), Popayán, Colombia | camilosegura6@gmail.com |
 
 **Contact:** caduranpd@gmail.com
 
@@ -119,7 +119,7 @@ simulation, and `qiskit_ibm_runtime.EstimatorV2` for IBM Quantum hardware.
 
 This library supports the open Qiskit 2.x implementation associated with:
 
-> Carlos A. Durán Paredes, Javier E. León Calderón, Nicolás Sánchez Perea,
+> Carlos A. Durán Paredes, Javier E. León Calderón, Nicolás Sánchez Perez,
 > German Darío Díaz, and Camilo Segura Quintero. **Quantum Machine Learning for
 > Cyber-Physical Anomaly Detection in Unmanned Aerial Vehicles: A Leakage-Free
 > Evaluation with Proxy-Audited Feature Sets.** arXiv:2605.19233, submitted
@@ -411,7 +411,7 @@ benchmark evaluation, also cite the associated study below.
                    in Unmanned Aerial Vehicles: A Leakage-Free Evaluation with
                    Proxy-Audited Feature Sets},
   author        = {Carlos A. Dur{\'a}n Paredes and Javier E. Le{\'o}n Calder{\'o}n
-                   and Nicol{\'a}s S{\'a}nchez Perea and German Dar{\'i}o D{\'i}az
+                   and Nicol{\'a}s S{\'a}nchez Perez and German Dar{\'i}o D{\'i}az
                    and Camilo Segura Quintero},
   year          = {2026},
   eprint        = {2605.19233},
@@ -429,7 +429,7 @@ benchmark evaluation, also cite the associated study below.
                for data re-uploading quantum classifiers on Qiskit 2.x},
   author    = {Carlos Andr{\'e}s Dur{\'a}n Paredes and
                Javier Esteban Le{\'o}n Calder{\'o}n and
-               Nicol{\'a}s S{\'a}nchez Perea and
+               Nicol{\'a}s S{\'a}nchez Perez and
                German Dar{\'i}o D{\'i}az and
                Camilo Segura},
   year      = {2026},
@@ -447,7 +447,7 @@ benchmark evaluation, also cite the associated study below.
                Proxy-Audited Feature Sets},
   author    = {Dur{\'a}n Paredes, Carlos A. and
                Le{\'o}n Calder{\'o}n, Javier E. and
-               S{\'a}nchez Perea, Nicol{\'a}s and
+               S{\'a}nchez Perez, Nicol{\'a}s and
                D{\'i}az, German Dar{\'i}o and
                Segura Quintero, Camilo},
   year      = {2026},
