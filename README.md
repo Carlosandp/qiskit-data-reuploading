@@ -9,6 +9,7 @@
 [![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
 [![Docs License: CC BY 4.0](https://img.shields.io/badge/Docs%20License-CC%20BY%204.0-lightgrey.svg)](LICENSE-CC-BY.txt)
 [![Qiskit](https://img.shields.io/badge/compatible%20with-Qiskit%202.x%20V2%20primitives-6929c4)](https://www.ibm.com/quantum/qiskit)
+[![Qiskit Ecosystem](https://qisk.it/e-d5572b9d)](https://qiskit.github.io/ecosystem/p/d5572b9d/)
 [![arXiv](https://img.shields.io/badge/arXiv-2605.19233-b31b1b.svg)](https://arxiv.org/abs/2605.19233)
 
 **A PyPI-installable, scikit-learn-compatible Python library for data
@@ -24,6 +25,12 @@ research-grade, benchmarkable, and hardware-ready open-source package.*
 ```bash
 pip install qiskit-data-reuploading
 ```
+
+---
+
+![Data Re-uploading Classifier — training animation](data_reuploading_classifier.gif)
+
+*A data re-uploading classifier learning to separate classes across training iterations.*
 
 </div>
 
@@ -48,6 +55,7 @@ This library is developed and maintained by:
 ## Table of Contents
 
 - [Authors](#authors)
+- [Qiskit Ecosystem](#qiskit-ecosystem)
 - [What is Data Re-uploading?](#what-is-data-re-uploading)
 - [Existing Ecosystem Analysis](#existing-ecosystem-analysis)
 - [Related Research Article](#related-research-article)
@@ -63,6 +71,18 @@ This library is developed and maintained by:
 - [Citation](#citation)
 - [Contributing](#contributing)
 - [Disclaimer](#disclaimer)
+
+---
+
+## Qiskit Ecosystem
+
+`qiskit-data-reuploading` is an **officially accepted member of the [Qiskit Ecosystem](https://qiskit.github.io/ecosystem/p/d5572b9d/)** — the curated registry of community projects compatible with Qiskit.
+
+[![Qiskit Ecosystem](https://qisk.it/e-d5572b9d)](https://qiskit.github.io/ecosystem/p/d5572b9d/)
+
+The library is listed under the **QML**, **optimization**, **quantum information**, **research**, and **circuit building** labels, and is classified as a **Paper artifact** in the Python interface category. It is the only PyPI-installable, sklearn-compatible data re-uploading classifier currently registered in the ecosystem.
+
+> **Ecosystem listing:** https://qiskit.github.io/ecosystem/p/d5572b9d/
 
 ---
 
@@ -102,6 +122,9 @@ This library addresses a gap that remained open in the Qiskit ecosystem as of mi
 - Native data re-uploading support in `qiskit-machine-learning`
 - A dedicated feature map in Qiskit's `circuit.library`
 - Reproducible benchmarks (DR vs. MLP/SVM) on Qiskit 2.x V2 primitives
+
+This library is now an **accepted Qiskit Ecosystem member** — filling the gap as the first
+installable, benchmarkable, and hardware-ready data re-uploading implementation for Qiskit 2.x.
 
 **Deprecated approaches this library explicitly avoids:**
 
